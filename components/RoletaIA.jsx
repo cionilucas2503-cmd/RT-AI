@@ -19,12 +19,78 @@ Agrupe números pelo dígito final:
 - etc.
 Quando um terminal aparece 3+ vezes nas últimas 20 jogadas, está "aquecido".
 
-### 2. TERMINAL CAMUFLADO (sua estratégia principal)
-Padrão oculto onde a mesa puxa um terminal de forma disfarçada:
-- Exemplo: cai 21, depois cai 35 → soma dos dígitos: 2+1=3, 3+5=8 → diferença=5 → terminal camuflado é o 5
-- Exemplo: cai 10 (1+0=1), depois cai 19 (1+9=10→1+0=1) → mesmo resultado de redução = terminal camuflado 1
-- Identifique sequências onde números consecutivos compartilham: mesma soma de dígitos, dígitos espelhados (ex: 13 e 31), ou redução numérica igual
-- Quando o padrão se repete 2+ vezes = sinal forte
+### 2. TERMINAL CAMUFLADO (estratégia principal do usuário)
+A bolinha cai nos vizinhos físicos de um terminal na roda, revelando que aquele terminal está sendo "puxado" de forma camuflada.
+
+REGRA: Cada número do terminal tem vizinhos diretos (SINAL FORTE) e segundos vizinhos (SINAL FRACO) na roda europeia.
+Se os vizinhos de um mesmo terminal aparecem com CONSTÂNCIA nas últimas 5-10 jogadas = terminal camuflado ativo.
+
+MAPA COMPLETO DE VIZINHOS POR TERMINAL:
+
+TERMINAL 0 (0,10,20,30):
+  26—C0—32 | 2nd: 3,15
+  11—C30—8 | 2nd: 36,23
+  23—C10—5 | 2nd: 8,24
+  1—C20—14 | 2nd: 33,31
+
+TERMINAL 1 (1,11,21,31):
+  33—C1—20 | 2nd: 16,14
+  36—C11—30 | 2nd: 13,8
+  4—C21—2 | 2nd: 19,25
+  14—C31—9 | 2nd: 20,22
+
+TERMINAL 2 (2,12,22,32):
+  0—C32—15 | 2nd: 26,19
+  21—C2—25 | 2nd: 4,17
+  9—C22—18 | 2nd: 31,29
+  28—C12—35 | 2nd: 7,3
+
+TERMINAL 3 (3,13,23,33):
+  27—C13—36 | 2nd: 6,11
+  8—C23—10 | 2nd: 30,5
+  16—C33—1 | 2nd: 24,20
+  35—C3—26 | 2nd: 12,0
+
+TERMINAL 4 (4,14,24,34):
+  19—C4—21 | 2nd: 15,2
+  17—C34—6 | 2nd: 25,27
+  5—C24—16 | 2nd: 10,33
+  20—C14—31 | 2nd: 1,9
+
+TERMINAL 5 (5,15,25,35):
+  32—C15—19 | 2nd: 0,4
+  2—C25—17 | 2nd: 21,34
+  10—C5—24 | 2nd: 23,16
+  12—C35—3 | 2nd: 28,26
+
+TERMINAL 6 (6,16,26,36):
+  34—C6—27 | 2nd: 17,13
+  13—C36—11 | 2nd: 27,30
+  24—C16—33 | 2nd: 5,1
+  3—C26—0 | 2nd: 35,32
+
+TERMINAL 7 (7,17,27):
+  25—C17—34 | 2nd: 2,6
+  6—C27—13 | 2nd: 34,36
+  29—C7—28 | 2nd: 18,12
+
+TERMINAL 8 (8,18,28):
+  30—C8—23 | 2nd: 11,10
+  22—C18—29 | 2nd: 9,7
+  7—C28—12 | 2nd: 29,35
+
+TERMINAL 9 (9,19,29):
+  15—C19—4 | 2nd: 32,21
+  31—C9—22 | 2nd: 14,18
+  18—C29—7 | 2nd: 22,28
+
+COMO CALCULAR A FORÇA:
+- FORTE: 3+ vizinhos diretos do mesmo terminal nas últimas 10 jogadas
+- MÉDIO: 2 vizinhos diretos OU 3+ entre diretos e segundos vizinhos
+- FRACO: 1 vizinho direto + 1 ou mais segundos vizinhos do mesmo terminal
+
+IMPORTANTE: Não precisa ser sequencial. Analise a FREQUÊNCIA nas últimas 5-10 jogadas.
+Exemplo: histórico tem 19, 2, 4 → todos vizinhos diretos do terminal 1 (C4, C2, C21) → SINAL FORTE terminal 1.
 
 ### 3. SETORES DA RODA FÍSICA
 - **Voisins du Zero**: 22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25
@@ -47,6 +113,100 @@ Concentração de 4+ em uma dúzia/coluna = sinal relevante.
 
 ### 6. PARIDADE E COR
 Analise as últimas 10 jogadas. Desvio de 7+ para um lado (ex: 8 vermelhos em 10) = possível reversão ou continuação de tendência forte.
+
+
+### 7. NÚMEROS QUE SE PUXAM (estratégia base — mais importante)
+Esta é a estratégia base que indica se a mesa está em bom momento. Quando um GATILHO cai, ele tende a puxar seus ALVOS nas jogadas seguintes.
+
+REGRAS:
+- Verifique se algum dos últimos 3 números caídos é um GATILHO
+- Se for, os ALVOS desse gatilho são os candidatos para as próximas jogadas
+- Números PRIMÁRIOS (p) = mais prováveis de aparecer após o gatilho
+- Números SECUNDÁRIOS (s) = também possíveis mas com menor força
+- Se 2+ gatilhos recentes apontam para o MESMO alvo = sinal MUITO FORTE
+- Esta estratégia deve ser fundida com todas as outras para máxima acertividade
+
+MAPA COMPLETO (gatilho → alvos):
+G0→33[p:16,24,5/s:1,20,14] 15[p:19,4,21/s:32,0,26] 3[p:26,0,32/s:35,12,28]
+G1→3[p:26,0,32/s:35,12,28] 36[p:10,8,13/s:27,6]
+G2→5[p:10,23,8/s:24,16,33] 22[p:9,31,14/s:18,29,7]
+G3→1[p:33,16,24/s:20,14,31] 0[p:15,33,35]
+G4→24[p:16,33,1/s:5,10,23] 29[p:18,22,9/s:7,28,12]
+G5→25[p:17,34,6/s:2,21,4] 22[p:9,31,14/s:18,29,7]
+G6→7[p:29,18,22/s:28,12,35] 9[p:31,14,20/s:22,18,29] 27[p:13,36,11/s:6,34,17] 19[p:4,21,2/s:15,32,0]
+G7→27[p:13,36,11/s:6,34,17] 19[p:4,21,2/s:15,32,0] 9[p:31,14,20/s:22,18,29]
+G8→11,36,8[p:23,10,5/s:30,11,36]
+G9→19[p:4,21,2/s:15,32,0] 7[p:29,18,22/s:28,12,35] 27[p:13,36,11/s:6,34,17]
+G10→12[p:28,7,29/s:35,3,26]
+G11→30,8,23[p:36,13,27]
+G12→17[p:34,6,27/s:25,2,21] 24[p:5,10,23/s:16,33,1] 0[p:32,15,19/s:26,3,35]
+G13→33[p:16,24,5/s:1,20,14] 0[p:32,15,19/s:26,3,35]
+G14→34[p:6,27,13/s:17,25,2] 9[p:31,14,20/s:22,18,29] 33[p:16,24,5/s:1,20,14]
+G15→9[p:31,14,20/s:22,18,29] 33[p:16,24,5/s:1,20,14] 35,3,0
+G16→21[p:2,25,17/s:4,19,15]
+G17→20[p:1,33,16/s:14,31,9]
+G18→21[p:2,25,17/s:4,19,15]
+G19→9[p:31,14,20/s:22,18,29] 7[p:29,18,22/s:28,12,35] 27[p:13,36,11/s:6,34,17]
+G20→17[p:34,6,27/s:25,2,21]
+G21→16[p:24,5,10/s:33,1,20]
+G22→2[p:25,17,34/s:21,4,19] 5[p:10,23,8/s:24,16,33]
+G23→25[p:17,34,6/s:2,21,4]
+G24→19[p:15,32,0/s:4,21,2]
+G25→5[p:10,23,8/s:24,16,33] 22[p:9,31,14/s:18,29,7]
+G26→33[p:16,24,5/s:1,20,14]
+G27→7[p:29,18,22/s:28,12,35] 9[p:31,14,20/s:22,18,29] 19[p:15,32,0/s:4,21,2]
+G28→27[p:13,36,11/s:6,34,17]
+G29→13[p:36,11,30/s:27,6,34]
+G30→11,36,8[p:23,10,5] 33[p:16,24,5/s:1,20,14]
+G31→30[p:8,23,10/s:11,36,13]
+G32→33[p:16,24,5/s:1,20,14]
+G33→0,3,35,15 25[p:17,34,6/s:2,21,4]
+G34→14[p:20,1,33/s:31,9,22]
+G35→33[p:16,24,5/s:1,20,14] 15,0,3 11[p:30,8,23/s:36,13,27]
+G36→36[p:11,30,8/s:13,27,6] 1[p:33,16,24/s:20,14,31]
+
+AO ANALISAR:
+1. Identifique os últimos 3 gatilhos no histórico
+2. Liste os alvos ativados por esses gatilhos
+3. Cruze com terminal simples, camuflado e setores
+4. Se múltiplas estratégias apontam para o mesmo número/grupo = GATILHO DE ENTRADA
+
+
+### COMO INDICAR APOSTAS (OBRIGATÓRIO em toda análise):
+Sempre que indicar um número alvo, apresente a aposta com vizinhos na roda:
+
+PADRÃO +3 (usar quando confiança < 80%):
+Ex: Número 33 → apostar em: 5 - 24 - 16 - [33] - 1 - 20 - 14
+(3 vizinhos à esquerda + número central + 3 vizinhos à direita = 7 números)
+
+PADRÃO +2 (usar quando confiança ≥ 80% — alta convicção):
+Ex: Número 33 → apostar em: 24 - 16 - [33] - 1 - 20
+(2 vizinhos à esquerda + número central + 2 vizinhos à direita = 5 números)
+
+MAPA DE VIZINHOS ±3 NA RODA (esq-esq-esq | CENTRO | dir-dir-dir):
+0: 35-3-26|0|32-15-19    1: 24-16-33|1|20-14-31    2: 19-4-21|2|25-17-34
+3: 28-12-35|3|26-0-32    4: 32-15-19|4|21-2-25     5: 8-23-10|5|24-16-33
+6: 25-17-34|6|27-13-36   7: 22-18-29|7|28-12-35    8: 36-11-30|8|23-10-5
+9: 20-14-31|9|22-18-29   10: 30-8-23|10|5-24-16    11: 27-13-36|11|30-8-23
+12: 29-7-28|12|35-3-26   13: 34-6-27|13|36-11-30   14: 33-1-20|14|31-9-22
+15: 26-0-32|15|19-4-21   16: 10-5-24|16|33-1-20    17: 21-2-25|17|34-6-27
+18: 31-9-22|18|29-7-28   19: 0-32-15|19|4-21-2     20: 16-33-1|20|14-31-9
+21: 15-19-4|21|2-25-17   22: 14-31-9|22|18-29-7    23: 11-30-8|23|10-5-24
+24: 23-10-5|24|16-33-1   25: 4-21-2|25|17-34-6     26: 12-35-3|26|0-32-15
+27: 17-34-6|27|13-36-11  28: 18-29-7|28|12-35-3    29: 9-22-18|29|7-28-12
+30: 13-36-11|30|8-23-10  31: 1-20-14|31|9-22-18    32: 3-26-0|32|15-19-4
+33: 5-24-16|33|1-20-14   34: 2-25-17|34|6-27-13    35: 7-28-12|35|3-26-0
+36: 6-27-13|36|11-30-8
+
+REGRA DE DECISÃO +2 vs +3:
+- Confiança ≥ 80% E 3+ estratégias convergindo E gatilho NSP forte → usar +2
+- Demais casos → usar +3
+
+LÓGICA DE ENTRADA CORRETA:
+1. Gatilho cai → identifica Alvo
+2. Verifica primários do Alvo (esses são os candidatos reais)
+3. Seleciona o candidato mais confirmado pelas outras estratégias
+4. Apresenta a aposta com vizinhos (+2 ou +3)
 
 ## REGRAS DE DECISÃO:
 - **MESA BOA**: 2+ estratégias convergindo para o mesmo padrão com força MÉDIA ou FORTE
@@ -135,35 +295,39 @@ const STRATEGIES = [
     id: "terminal_camuflado",
     icon: "🎭",
     title: "Terminal Camuflado",
-    subtitle: "Estratégia principal — padrão oculto",
+    subtitle: "Estratégia principal — vizinhos físicos da roda",
     color: "#c9a84c",
     sections: [
       {
         heading: "O que é?",
-        text: "O terminal camuflado ocorre quando a mesa puxa um terminal de forma oculta. Os números não compartilham o mesmo dígito final, mas possuem uma relação matemática que revela o terminal real que está sendo puxado."
+        text: "A bolinha cai nos vizinhos físicos de um terminal na roda europeia, revelando que aquele terminal está sendo puxado de forma camuflada. Não precisa cair no terminal diretamente — cai nas casas ao lado dele."
       },
       {
-        heading: "Técnica A — Redução Numérica",
-        text: "Some os dígitos de um número até obter 1 dígito. Se dois números consecutivos têm a mesma redução, o terminal camuflado é esse valor.",
-        example: "Cai 19 → 1+9=10 → 1+0=1\nCai 28 → 2+8=10 → 1+0=1\n\nAmbos reduzem para 1\n→ Terminal Camuflado: 1\n→ Apostar em: 1 — 11 — 21 — 31"
+        heading: "Regra Principal",
+        text: "Cada número do terminal possui vizinhos diretos (sinal forte) e segundos vizinhos (sinal fraco) na roda. Se esses vizinhos aparecem com constância nas últimas 5-10 jogadas, o terminal está sendo puxado camuflado.",
+        example: "Bolinha cai em: 19 — 31 — 5\n\n19 é vizinho direto do 4 (terminal 4)\n31 é vizinho direto do 14 (terminal 4)\n5 é vizinho direto do 24 (terminal 4)\n\n→ Terminal Camuflado: 4 — SINAL FORTE\n→ Apostar em: 4 — 14 — 24 — 34"
       },
       {
-        heading: "Técnica B — Espelhamento",
-        text: "Dois números são espelhos quando seus dígitos são invertidos (ex: 13 e 31). Quando saem em sequência, indica ativação de padrão espelhado.",
-        example: "Cai 13, depois cai 31\n\nPadrão espelho ativo: 13 ↔ 31\n→ Terminal camuflado: 1 e 3 alternando\n→ Apostar em: 1, 11, 21, 31 ou 3, 13, 23, 33"
-      },
-      {
-        heading: "Técnica C — Diferença de Somas (Sua Técnica)",
-        text: "Calcule a soma dos dígitos de dois números consecutivos. A DIFERENÇA entre essas somas revela o terminal camuflado.",
-        example: "Cai 21 → 2+1 = 3\nCai 35 → 3+5 = 8\nDiferença: 8 - 3 = 5\n\n→ Terminal Camuflado: 5\n→ Apostar em: 5 — 15 — 25 — 35"
+        heading: "Vizinhos do Terminal 1",
+        table: [
+          ["Número","Viz. Esq.","Viz. Dir.","2º Viz."],
+          ["C1","33","20","16, 14"],
+          ["C11","36","30","13, 8"],
+          ["C21","4","2","19, 25"],
+          ["C31","14","9","20, 22"],
+        ]
       },
       {
         heading: "Força do Sinal",
         bullets: [
-          "🟢 FORTE: Padrão repetido 2+ vezes no histórico",
-          "🟡 MÉDIO: Padrão identificado 1 vez com consistência alta",
-          "🔴 FRACO: Padrão identificado 1 vez com consistência baixa",
+          "🟢 FORTE: 3+ vizinhos diretos do mesmo terminal nas últimas 10 jogadas",
+          "🟡 MÉDIO: 2 vizinhos diretos OU 3+ entre diretos e segundos vizinhos",
+          "🔴 FRACO: 1 vizinho direto + 1 ou mais segundos vizinhos do mesmo terminal",
         ]
+      },
+      {
+        heading: "Importante",
+        text: "Não precisa ser em sequência. A ARIA analisa a frequência total nas últimas 5-10 jogadas. Quanto mais vizinhos do mesmo terminal aparecerem, mais forte o sinal — mesmo que intercalados com outros números."
       }
     ]
   },
@@ -324,8 +488,99 @@ const STRATEGIES = [
         example: "Últimas 10: P P P V P P P P V P\n(8 pretos de 10)\n\n→ Sinal FORTE — Desvio de Pretos\n→ Verificar se está crescendo (continuar)\n   ou desacelerando (reversão próxima)"
       }
     ]
+  },
+  {
+    id: "numeros_puxam",
+    icon: "🧲",
+    title: "Números que se Puxam",
+    subtitle: "Estratégia base — gatilhos e alvos",
+    color: "#ff6b35",
+    sections: [
+      {
+        heading: "O que é?",
+        text: "É a estratégia base do sistema. Cada número da roleta é um GATILHO que tende a puxar números ALVOS específicos nas jogadas seguintes. Quando um gatilho cai, os alvos mapeados têm maior probabilidade de aparecer."
+      },
+      {
+        heading: "Como funciona",
+        bullets: [
+          "1. Observe os últimos 3 números que caíram — esses são os gatilhos ativos",
+          "2. Cada gatilho aponta para alvos específicos com números primários e secundários",
+          "3. Números PRIMÁRIOS = maior probabilidade de sair após o gatilho",
+          "4. Números SECUNDÁRIOS = possíveis, mas com força menor",
+          "5. Se 2+ gatilhos apontam para o mesmo alvo = sinal MUITO FORTE"
+        ]
+      },
+      {
+        heading: "Exemplo — Gatilho 26",
+        example: "Cai o número 26 (gatilho)\n\nAlvo ativado: 33\nPrimários do alvo 33: 16, 24, 5\nSecundários: 1, 20, 14\n\nAposta +3 no alvo 33:\n5 - 24 - 16 - [33] - 1 - 20 - 14\n(7 números cobertos na roda)"
+      },
+      {
+        heading: "Padrão de Aposta",
+        bullets: [
+          "📌 +3: 3 vizinhos à esquerda + número central + 3 à direita (7 números) — padrão",
+          "📌 +2: 2 vizinhos à esquerda + número central + 2 à direita (5 números) — alta convicção",
+          "🔴 MUITO FORTE: 2+ gatilhos recentes apontam para o mesmo alvo",
+          "🟢 FORTE: 1 gatilho + confirmação de outra estratégia",
+          "🟡 MÉDIO: 1 gatilho sem confirmação adicional"
+        ]
+      },
+      {
+        heading: "Base para todas as estratégias",
+        text: "Esta estratégia define SE a mesa está boa para jogar. Combine com Terminal Camuflado, Setores e Terminal Simples para máxima acertividade. Quanto mais estratégias confirmarem o mesmo alvo, mais certeira a entrada."
+      }
+    ]
   }
 ];
+
+const WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+
+function getWheelBet(num, sides) {
+  const idx = WHEEL.indexOf(num);
+  const n = WHEEL.length;
+  const left = Array.from({length: sides}, (_,i) => WHEEL[(idx - sides + i + n) % n]);
+  const right = Array.from({length: sides}, (_,i) => WHEEL[(idx + 1 + i) % n]);
+  return { left, center: num, right, all: [...left, num, ...right] };
+}
+
+const NUMEROS_QUE_SE_PUXAM = {
+  0:  [{alvo:"33",  p:[16,24,5],  s:[1,20,14]}, {alvo:"15", p:[19,4,21],  s:[32,0,26]},  {alvo:"3",  p:[26,0,32],  s:[35,12,28]}],
+  1:  [{alvo:"3",   p:[26,0,32],  s:[35,12,28]},{alvo:"36", p:[10,8,13],  s:[27,6]}],
+  2:  [{alvo:"5",   p:[10,23,8],  s:[24,16,33]},{alvo:"22", p:[9,31,14],  s:[18,29,7]}],
+  3:  [{alvo:"1",   p:[33,16,24], s:[20,14,31]},{alvo:"0",  p:[15,33,35], s:[]}],
+  4:  [{alvo:"24",  p:[16,33,1],  s:[5,10,23]}, {alvo:"29", p:[18,22,9],  s:[7,28,12]}],
+  5:  [{alvo:"25",  p:[17,34,6],  s:[2,21,4]},  {alvo:"22", p:[9,31,14],  s:[18,29,7]}],
+  6:  [{alvo:"7",   p:[29,18,22], s:[28,12,35]},{alvo:"9",  p:[31,14,20], s:[22,18,29]},{alvo:"27", p:[13,36,11], s:[6,34,17]},{alvo:"19", p:[4,21,2], s:[15,32,0]}],
+  7:  [{alvo:"27",  p:[13,36,11], s:[6,34,17]}, {alvo:"19", p:[4,21,2],   s:[15,32,0]}, {alvo:"9",  p:[31,14,20], s:[22,18,29]}],
+  8:  [{alvo:"11,36,8", p:[23,10,5], s:[30,11,36]}],
+  9:  [{alvo:"19",  p:[4,21,2],   s:[15,32,0]}, {alvo:"7",  p:[29,18,22], s:[28,12,35]},{alvo:"27", p:[13,36,11], s:[6,34,17]}],
+  10: [{alvo:"12",  p:[28,7,29],  s:[35,3,26]}],
+  11: [{alvo:"30,8,23", p:[36,13,27], s:[]}],
+  12: [{alvo:"17",  p:[34,6,27],  s:[25,2,21]}, {alvo:"24", p:[5,10,23],  s:[16,33,1]}, {alvo:"0",  p:[32,15,19], s:[26,3,35]}],
+  13: [{alvo:"33",  p:[16,24,5],  s:[1,20,14]}, {alvo:"0",  p:[32,15,19], s:[26,3,35]}],
+  14: [{alvo:"34",  p:[6,27,13],  s:[17,25,2]}, {alvo:"9",  p:[31,14,20], s:[22,18,29]},{alvo:"33", p:[16,24,5],  s:[1,20,14]}],
+  15: [{alvo:"9",   p:[31,14,20], s:[22,18,29]},{alvo:"33", p:[16,24,5],  s:[1,20,14]}, {alvo:"35,3,0", p:[], s:[]}],
+  16: [{alvo:"21",  p:[2,25,17],  s:[4,19,15]}],
+  17: [{alvo:"20",  p:[1,33,16],  s:[14,31,9]}],
+  18: [{alvo:"21",  p:[2,25,17],  s:[4,19,15]}],
+  19: [{alvo:"9",   p:[31,14,20], s:[22,18,29]},{alvo:"7",  p:[29,18,22], s:[28,12,35]},{alvo:"27", p:[13,36,11], s:[6,34,17]}],
+  20: [{alvo:"17",  p:[34,6,27],  s:[25,2,21]}],
+  21: [{alvo:"16",  p:[24,5,10],  s:[33,1,20]}],
+  22: [{alvo:"2",   p:[25,17,34], s:[21,4,19]}, {alvo:"5",  p:[10,23,8],  s:[24,16,33]}],
+  23: [{alvo:"25",  p:[17,34,6],  s:[2,21,4]}],
+  24: [{alvo:"19",  p:[15,32,0],  s:[4,21,2]}],
+  25: [{alvo:"5",   p:[10,23,8],  s:[24,16,33]},{alvo:"22", p:[9,31,14],  s:[18,29,7]}],
+  26: [{alvo:"33",  p:[16,24,5],  s:[1,20,14]}],
+  27: [{alvo:"7",   p:[29,18,22], s:[28,12,35]},{alvo:"9",  p:[31,14,20], s:[22,18,29]},{alvo:"19", p:[15,32,0],  s:[4,21,2]}],
+  28: [{alvo:"27",  p:[13,36,11], s:[6,34,17]}],
+  29: [{alvo:"13",  p:[36,11,30], s:[27,6,34]}],
+  30: [{alvo:"11,36,8", p:[23,10,5], s:[]},     {alvo:"33", p:[16,24,5],  s:[1,20,14]}],
+  31: [{alvo:"30",  p:[8,23,10],  s:[11,36,13]}],
+  32: [{alvo:"33",  p:[16,24,5],  s:[1,20,14]}],
+  33: [{alvo:"0,3,35,15", p:[], s:[]},           {alvo:"25", p:[17,34,6],  s:[2,21,4]}],
+  34: [{alvo:"14",  p:[20,1,33],  s:[31,9,22]}],
+  35: [{alvo:"33",  p:[16,24,5],  s:[1,20,14]}, {alvo:"15,0,3", p:[], s:[]},{alvo:"11", p:[30,8,23], s:[36,13,27]}],
+  36: [{alvo:"36",  p:[11,30,8],  s:[13,27,6]}, {alvo:"1",  p:[33,16,24], s:[20,14,31]}],
+};
 
 export default function RoletaIA() {
   const [tab, setTab] = useState("analisar");
@@ -340,7 +595,7 @@ export default function RoletaIA() {
   const [bancaAtual, setBancaAtual] = useState("");
   const [inputError, setInputError] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState(null);
-  const [activeStrategies, setActiveStrategies] = useState(new Set(["terminal_simples","terminal_camuflado","setores","padroes","duzias","paridade"]));
+  const [activeStrategies, setActiveStrategies] = useState(new Set(["terminal_simples","terminal_camuflado","setores","padroes","duzias","paridade","numeros_puxam"]));
   const [customStrategies, setCustomStrategies] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStratName, setNewStratName] = useState("");
@@ -434,7 +689,7 @@ export default function RoletaIA() {
     }
 
     try {
-      const res = await fetch("/api/analyze", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -509,16 +764,24 @@ export default function RoletaIA() {
                   }}>✕</button>
                 </div>
               ) : (
-                <div onClick={() => fileRef.current?.click()} style={{
-                  border: "2px dashed #1a2030", borderRadius: 12, padding: "24px 16px", textAlign: "center",
-                  cursor: "pointer", transition: "border-color 0.2s"
+                <label htmlFor="imgUpload" style={{
+                  display: "block", border: "2px dashed #c9a84c55", borderRadius: 12,
+                  padding: "28px 16px", textAlign: "center", cursor: "pointer",
+                  background: "rgba(201,168,76,0.03)"
                 }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>📱</div>
-                  <div style={{ fontSize: 13, color: "#94a3b8" }}>Toque para enviar o print</div>
-                  <div style={{ fontSize: 11, color: "#4a5568", marginTop: 4 }}>A IA vai ler o histórico automaticamente</div>
-                </div>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>📸</div>
+                  <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: 700, marginBottom: 4 }}>Toque aqui para enviar o print</div>
+                  <div style={{ fontSize: 11, color: "#4a5568", fontFamily: "monospace" }}>A IA vai ler o histórico automaticamente</div>
+                </label>
               )}
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImage} />
+              <input
+                id="imgUpload"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImage}
+                style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+              />
             </div>
 
             {/* Manual numbers */}
@@ -627,73 +890,111 @@ export default function RoletaIA() {
             {result && (
               <div style={{ marginTop: 16 }}>
 
-                {/* Status */}
-                <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace" }}>STATUS DA MESA</div>
-                    <div style={{
-                      padding: "6px 16px", borderRadius: 100, background: statusBg, color: statusColor,
-                      fontSize: 13, fontFamily: "monospace", fontWeight: 900, letterSpacing: 2,
-                      border: `1px solid ${statusColor}40`
-                    }}>
-                      {result.status_mesa === "BOA" ? "✅" : result.status_mesa === "EVITAR" ? "🚫" : "⏳"} {result.status_mesa}
-                    </div>
+                {/* 1. DECISÃO RÁPIDA */}
+                <div style={{
+                  background: result.status_mesa === "BOA" ? "rgba(0,230,118,0.07)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.07)" : "rgba(255,215,64,0.07)",
+                  border: `3px solid ${statusColor}`, borderRadius: 20, padding: "22px 16px", marginBottom: 14, textAlign: "center"
+                }}>
+                  <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 8 }}>
+                    {result.status_mesa === "BOA" ? "✅" : result.status_mesa === "EVITAR" ? "🚫" : "⏳"}
                   </div>
-
-                  {/* Confidence bar */}
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2 }}>CONFIANÇA</span>
-                      <span style={{ fontSize: 13, fontFamily: "monospace", fontWeight: 700, color: statusColor }}>{result.confianca}%</span>
-                    </div>
-                    <div style={{ height: 6, background: "#1a2030", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${result.confianca}%`, background: `linear-gradient(90deg, ${statusColor}88, ${statusColor})`, borderRadius: 3, transition: "width 0.8s ease" }} />
-                    </div>
+                  <div style={{ fontSize: 32, fontWeight: 900, color: statusColor, fontFamily: "monospace", letterSpacing: 4, marginBottom: 6 }}>
+                    {result.status_mesa === "BOA" ? "ENTRAR" : result.status_mesa === "EVITAR" ? "NÃO ENTRAR" : "AGUARDAR"}
                   </div>
-
-                  {/* Strategy grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    {Object.entries(result.estrategias || {}).map(([key, val]) => {
-                      const labels = { terminal_simples: "Terminal", terminal_camuflado: "Camuflado", setores: "Setores", padroes: "Padrões", duzias: "Dúzias", paridade: "Paridade" };
-                      if (!val.ativo && val.forca === "INATIVO") return null;
-                      return (
-                        <div key={key} style={{ background: "#161c28", borderRadius: 10, padding: "10px 12px", border: "1px solid #1a2030" }}>
-                          <div style={{ fontSize: 9, color: "#4a5568", letterSpacing: 2, fontFamily: "monospace", marginBottom: 4 }}>{labels[key] || key}</div>
-                          <div style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: forcaColor(val.forca) }}>{val.forca}</div>
-                          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 3, lineHeight: 1.4 }}>{val.descricao}</div>
-                        </div>
-                      );
-                    })}
+                  <div style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2 }}>
+                    CONFIANÇA: <span style={{ color: statusColor, fontWeight: 700 }}>{result.confianca}%</span>
+                  </div>
+                  <div style={{ height: 4, background: "#1a2030", borderRadius: 2, overflow: "hidden", marginTop: 10 }}>
+                    <div style={{ height: "100%", width: `${result.confianca}%`, background: statusColor, borderRadius: 2 }} />
                   </div>
                 </div>
 
-                {/* Full analysis */}
-                <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 12 }}>🧠 ANÁLISE COMPLETA</div>
-                  <div style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.8, borderLeft: "2px solid #c9a84c33", paddingLeft: 14 }}>
-                    {result.analise_completa}
-                  </div>
-                </div>
+                {/* 2A. NÚMEROS (quando BOA) */}
+                {result.status_mesa === "BOA" && result.apostar_em && (() => {
+                  const blocos = result.apostar_em.split("\n\n").filter(Boolean);
+                  return (
+                    <div style={{ background: "#0d1118", border: "1px solid #c9a84c40", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎯 APOSTAR AGORA</div>
+                      {blocos.map((bloco, bi) => {
+                        const linhas = bloco.split("\n").filter(Boolean);
+                        const label = linhas.find(l => l.includes("+") || l.includes("→") || l.includes(":")) || "";
+                        const numLinha = linhas.find(l => /\d/.test(l) && !l.includes(":") && !l.includes("+"));
+                        if (!numLinha) return null;
+                        const tokens = numLinha.trim().split(/\s+/).filter(Boolean);
+                        return (
+                          <div key={bi} style={{ marginBottom: bi < blocos.length - 1 ? 20 : 0 }}>
+                            {label && <div style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace", marginBottom: 10 }}>{label}</div>}
+                            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                              {tokens.map((t, ti) => {
+                                const isCtr = t.startsWith("[");
+                                const n = t.replace(/[\[\]]/g, "");
+                                const num = parseInt(n);
+                                const bg = n === "0" ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1e293b";
+                                return (
+                                  <div key={ti} style={{
+                                    width: isCtr ? 58 : 44, height: isCtr ? 58 : 44, borderRadius: "50%",
+                                    background: bg, border: isCtr ? "3px solid #c9a84c" : "1px solid #334155",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: isCtr ? 19 : 14, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                                    boxShadow: isCtr ? "0 0 20px rgba(201,168,76,0.6)" : "none", flexShrink: 0
+                                  }}>{n}</div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
-                {/* Trigger */}
-                {result.gatilho && (
-                  <div style={{ background: "rgba(201,168,76,0.07)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎯 GATILHO DE ENTRADA</div>
-                    <div style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.7, fontWeight: 500 }}>{result.gatilho}</div>
-                    {result.apostar_em && (
-                      <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(201,168,76,0.1)", borderRadius: 10, fontSize: 13, color: "#f0d060", fontFamily: "monospace" }}>
-                        📌 Apostar em: {result.apostar_em}
-                      </div>
-                    )}
+                {/* 2B. GATILHO A ESPERAR (quando AGUARDAR/EVITAR) */}
+                {result.status_mesa !== "BOA" && result.gatilho && (
+                  <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>⏭️ AGUARDAR ESTE GATILHO</div>
+                    <div style={{ fontSize: 15, color: "#e2e8f0", lineHeight: 1.8, fontWeight: 600 }}>{result.gatilho}</div>
                   </div>
                 )}
 
-                {/* Alert */}
+                {/* 3. PRÓXIMO GATILHO (quando BOA) */}
+                {result.status_mesa === "BOA" && result.gatilho && (
+                  <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "12px 16px", marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 6 }}>⏭️ PRÓXIMO GATILHO</div>
+                    <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.7 }}>{result.gatilho}</div>
+                  </div>
+                )}
+
+                {/* 4. ALERTA */}
                 {result.alerta && (
-                  <div style={{ background: "rgba(255,61,87,0.08)", border: "1px solid rgba(255,61,87,0.25)", borderRadius: 12, padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "#ff6b7a", lineHeight: 1.6 }}>
+                  <div style={{ background: "rgba(255,61,87,0.08)", border: "1px solid rgba(255,61,87,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 14, fontSize: 13, color: "#ff6b7a", lineHeight: 1.6 }}>
                     ⚠️ {result.alerta}
                   </div>
                 )}
+
+                {/* 5. DETALHES */}
+                <details style={{ marginBottom: 14 }}>
+                  <summary style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 12, padding: "12px 16px", fontSize: 11, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
+                    <span>📊 VER ANÁLISE DETALHADA</span><span>›</span>
+                  </summary>
+                  <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: "0 0 12px 12px", padding: 16, borderTop: "none" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+                      {Object.entries(result.estrategias || {}).map(([key, val]) => {
+                        const labels = { terminal_simples: "Terminal", terminal_camuflado: "Camuflado", setores: "Setores", padroes: "Padrões", duzias: "Dúzias", paridade: "Paridade", numeros_puxam: "N.Puxam" };
+                        if (val.forca === "INATIVO") return null;
+                        return (
+                          <div key={key} style={{ background: "#161c28", borderRadius: 10, padding: "10px 12px", border: "1px solid #1a2030" }}>
+                            <div style={{ fontSize: 9, color: "#4a5568", letterSpacing: 1, fontFamily: "monospace", marginBottom: 4 }}>{labels[key] || key}</div>
+                            <div style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: forcaColor(val.forca) }}>{val.forca}</div>
+                            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 3, lineHeight: 1.4 }}>{val.descricao}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.8, borderLeft: "2px solid #c9a84c33", paddingLeft: 12 }}>
+                      {result.analise_completa}
+                    </div>
+                  </div>
+                </details>
 
               </div>
             )}

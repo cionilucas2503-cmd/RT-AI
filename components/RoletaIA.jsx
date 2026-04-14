@@ -598,142 +598,134 @@ function RouletteTable({ result }) {
   const isBoa = status === "BOA";
 
   const chipNums = isBoa ? parseChipNumbers(result.apostar_em) : [];
-  // For aguardar, parse gatilho numbers
   const gatilhoNums = !isBoa ? parseChipNumbers(result.gatilho) : [];
 
-  // Table rows: top=row0, mid=row1, bot=row2
-  const rows = [
-    [3,6,9,12,15,18,21,24,27,30,33,36],
-    [2,5,8,11,14,17,20,23,26,29,32,35],
-    [1,4,7,10,13,16,19,22,25,28,31,34]
-  ];
-
-  const getCellBg = (n) => {
-    if (isEvitar) return "#1a1a1a";
-    if (RED_NUM.has(n)) return "#b71c1c";
-    return "#1a1a1a";
-  };
-
-  const getCellBorder = (n) => {
-    if (isEvitar) return "1px solid #222";
-    if (chipNums.includes(n)) return "2px solid #c9a84c";
-    if (gatilhoNums.includes(n)) return "2px solid #ffd740";
-    return "1px solid #2a2a2a";
-  };
-
   const isCenter = (n) => {
-    // Find the central number (between brackets) in apostar_em
     if (!result.apostar_em) return false;
-    const matches = result.apostar_em.match(/\[([0-9]+)\]/g);
+    const matches = result.apostar_em.match(/\[(\d+)\]/g);
     if (!matches) return false;
     return matches.some(m => parseInt(m.replace(/[\[\]]/g,"")) === n);
   };
 
-  const cellSize = 26;
+  // Wheel sequence
+  const WHEEL_SEQ = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  const total = WHEEL_SEQ.length;
+  const cx = 150, cy = 150, r = 130, rInner = 75;
+
+  const getColor = (n) => {
+    if (isEvitar) return n === 0 ? "#1a3a1a" : "#1a1a1a";
+    if (n === 0) return "#1b5e20";
+    return RED_NUM.has(n) ? "#b71c1c" : "#111";
+  };
+
+  const slices = WHEEL_SEQ.map((n, i) => {
+    const angleStep = (2 * Math.PI) / total;
+    const startAngle = i * angleStep - Math.PI / 2 - angleStep / 2;
+    const endAngle = startAngle + angleStep;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    const xi1 = cx + rInner * Math.cos(startAngle);
+    const yi1 = cy + rInner * Math.sin(startAngle);
+    const xi2 = cx + rInner * Math.cos(endAngle);
+    const yi2 = cy + rInner * Math.sin(endAngle);
+    const midAngle = (startAngle + endAngle) / 2;
+    const textR = (r + rInner) / 2;
+    const tx = cx + textR * Math.cos(midAngle);
+    const ty = cy + textR * Math.sin(midAngle);
+    const haChip = chipNums.includes(n);
+    const isGatilho = gatilhoNums.includes(n);
+    const isCtr = isCenter(n);
+    const hasHighlight = haChip || isGatilho;
+    return { n, startAngle, endAngle, x1, y1, x2, y2, xi1, yi1, xi2, yi2, tx, ty, midAngle, haChip, isGatilho, isCtr, hasHighlight };
+  });
 
   return (
     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 14, marginBottom: 14 }}>
-      <div style={{ fontSize: 10, color: isEvitar ? "#4a5568" : isAguardar ? "#ffd740" : "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 12 }}>
+      <div style={{ fontSize: 10, color: isEvitar ? "#4a5568" : isAguardar ? "#ffd740" : "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>
         {isEvitar ? "🚫 MESA INATIVA" : isAguardar ? "⏭️ AGUARDAR ESTES GATILHOS" : "🎯 COLOQUE AS FICHAS AQUI"}
       </div>
 
-      {/* Gatilho hint when aguardar */}
       {isAguardar && result.gatilho && (
         <div style={{ background: "rgba(255,215,64,0.08)", border: "1px solid #ffd74040", borderRadius: 10, padding: "10px 12px", marginBottom: 12, fontSize: 12, color: "#ffd740", lineHeight: 1.6 }}>
           {result.gatilho}
         </div>
       )}
 
-      {/* Roulette table */}
-      <div style={{ overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: 2, minWidth: "fit-content" }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <svg width="300" height="300" viewBox="0 0 300 300" style={{ filter: isEvitar ? "grayscale(1) brightness(0.4)" : "none" }}>
+          {/* Outer ring background */}
+          <circle cx={cx} cy={cy} r={r} fill="#0a0a0a" stroke="#2a2a2a" strokeWidth="1"/>
 
-          {/* Zero */}
-          <div style={{
-            width: cellSize, minHeight: cellSize * 3 + 4,
-            background: isEvitar ? "#0a1a0a" : "#1b5e20",
-            border: chipNums.includes(0) ? "2px solid #c9a84c" : "1px solid #2a2a2a",
-            borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 900, color: isEvitar ? "#333" : "#fff", fontFamily: "monospace",
-            position: "relative", flexShrink: 0
-          }}>
-            0
-            {chipNums.includes(0) && (
-              <div style={{ position: "absolute", width: 10, height: 10, borderRadius: "50%", background: "#c9a84c", top: 2, right: 2 }} />
-            )}
-          </div>
+          {/* Slices */}
+          {slices.map(({ n, startAngle, endAngle, x1, y1, x2, y2, xi1, yi1, xi2, yi2, tx, ty, midAngle, haChip, isGatilho, isCtr }) => {
+            const path = `M ${xi1} ${yi1} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} L ${xi2} ${yi2} A ${rInner} ${rInner} 0 0 0 ${xi1} ${yi1} Z`;
+            const fill = getColor(n);
+            const strokeColor = (haChip || isGatilho) ? (isCtr ? "#c9a84c" : haChip ? "#f0d060" : "#ffd740") : "#222";
+            const strokeW = (haChip || isGatilho) ? (isCtr ? 2.5 : 1.5) : 0.5;
+            const chipR = 6;
+            const chipX = cx + (r - 10) * Math.cos((startAngle + endAngle) / 2);
+            const chipY = cy + (r - 10) * Math.sin((startAngle + endAngle) / 2);
+            return (
+              <g key={n}>
+                <path d={path} fill={fill} stroke={strokeColor} strokeWidth={strokeW} />
+                <text
+                  x={tx} y={ty}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize={n >= 10 ? "7" : "8"}
+                  fontWeight="bold"
+                  fill={isEvitar ? "#333" : "#fff"}
+                  transform={`rotate(${(midAngle * 180 / Math.PI) + 90}, ${tx}, ${ty})`}
+                  style={{ fontFamily: "monospace" }}
+                >{n}</text>
+                {haChip && (
+                  <circle cx={chipX} cy={chipY} r={chipR}
+                    fill={isCtr ? "#c9a84c" : "#f0d060"}
+                    stroke="#000" strokeWidth="1"
+                    style={{ filter: isCtr ? "drop-shadow(0 0 4px #c9a84c)" : "none" }}
+                  />
+                )}
+                {isGatilho && !haChip && (
+                  <circle cx={chipX} cy={chipY} r={5}
+                    fill="#ffd740" stroke="#000" strokeWidth="1"
+                  />
+                )}
+              </g>
+            );
+          })}
 
-          {/* Number grid */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {rows.map((row, ri) => (
-              <div key={ri} style={{ display: "flex", gap: 2 }}>
-                {row.map(n => {
-                  const haChip = chipNums.includes(n);
-                  const isGatilho = gatilhoNums.includes(n);
-                  const isCtr = isCenter(n);
-                  return (
-                    <div key={n} style={{
-                      width: cellSize, height: cellSize,
-                      background: getCellBg(n),
-                      border: getCellBorder(n),
-                      borderRadius: 3,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 9, fontWeight: 700,
-                      color: isEvitar ? "#333" : "#fff",
-                      fontFamily: "monospace", position: "relative",
-                      flexShrink: 0,
-                      boxShadow: isCtr ? "0 0 8px rgba(201,168,76,0.8)" : haChip ? "0 0 4px rgba(201,168,76,0.4)" : "none"
-                    }}>
-                      {n}
-                      {haChip && (
-                        <div style={{
-                          position: "absolute", top: -4, right: -4,
-                          width: isCtr ? 10 : 8, height: isCtr ? 10 : 8,
-                          borderRadius: "50%",
-                          background: isCtr ? "#c9a84c" : "#f0d060",
-                          border: "1px solid #000",
-                          boxShadow: isCtr ? "0 0 6px #c9a84c" : "none"
-                        }} />
-                      )}
-                      {isGatilho && !haChip && (
-                        <div style={{
-                          position: "absolute", top: -4, right: -4,
-                          width: 8, height: 8, borderRadius: "50%",
-                          background: "#ffd740", border: "1px solid #000"
-                        }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+          {/* Inner circle */}
+          <circle cx={cx} cy={cy} r={rInner} fill="#0d1118" stroke="#1a2030" strokeWidth="2"/>
+          <circle cx={cx} cy={cy} r={rInner - 8} fill="#0a0c12" stroke="#1a2030" strokeWidth="1"/>
+
+          {/* Center text */}
+          <text x={cx} y={cy - 8} textAnchor="middle" fontSize="11" fill="#c9a84c" fontWeight="bold" style={{ fontFamily: "monospace" }}>ARIA</text>
+          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="8" fill="#4a5568" style={{ fontFamily: "monospace" }}>ROLETA</text>
+        </svg>
       </div>
 
       {/* Legend */}
-      <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
         {isBoa && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c", border: "1px solid #000" }} />
-              <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>NÚMERO CENTRAL</span>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c" }} />
+              <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>CENTRAL</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f0d060", border: "1px solid #000" }} />
-              <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>VIZINHOS (+2/+3)</span>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f0d060" }} />
+              <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>VIZINHOS</span>
             </div>
           </>
         )}
         {isAguardar && (
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd740", border: "1px solid #000" }} />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd740" }} />
             <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>GATILHO A AGUARDAR</span>
           </div>
         )}
-        {isEvitar && (
-          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>MESA SEM PADRÃO — NÃO JOGAR</span>
-        )}
+        {isEvitar && <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>MESA SEM PADRÃO</span>}
       </div>
     </div>
   );
@@ -1092,18 +1084,22 @@ export default function RoletaIA() {
                         return (
                           <div key={bi} style={{ marginBottom: bi < blocos.length - 1 ? 20 : 0 }}>
                             {label && <div style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace", marginBottom: 10 }}>{label}</div>}
-                            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                            <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
                               {tokens.map((t, ti) => {
+                                if (t === "-" || t === "—" || t === "–") {
+                                  return <span key={ti} style={{ color: "#334155", fontSize: 20, lineHeight: 1, fontWeight: 200 }}>—</span>;
+                                }
                                 const isCtr = t.startsWith("[");
                                 const n = t.replace(/[\[\]]/g, "");
                                 const num = parseInt(n);
-                                const bg = n === "0" ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1e293b";
+                                if (isNaN(num)) return null;
+                                const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
                                 return (
                                   <div key={ti} style={{
-                                    width: isCtr ? 58 : 44, height: isCtr ? 58 : 44, borderRadius: "50%",
-                                    background: bg, border: isCtr ? "3px solid #c9a84c" : "1px solid #334155",
+                                    width: isCtr ? 56 : 42, height: isCtr ? 56 : 42, borderRadius: "50%",
+                                    background: bg, border: isCtr ? "3px solid #c9a84c" : "1px solid #333",
                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: isCtr ? 19 : 14, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                                    fontSize: isCtr ? 18 : 13, fontWeight: 900, color: "#fff", fontFamily: "monospace",
                                     boxShadow: isCtr ? "0 0 20px rgba(201,168,76,0.6)" : "none", flexShrink: 0
                                   }}>{n}</div>
                                 );

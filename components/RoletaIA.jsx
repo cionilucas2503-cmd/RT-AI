@@ -1097,21 +1097,31 @@ export default function RoletaIA() {
                             <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
                               {tokens.map((t, ti) => {
                                 if (t === "-" || t === "—" || t === "–") {
-                                  return <span key={ti} style={{ color: "#334155", fontSize: 20, lineHeight: 1, fontWeight: 200 }}>—</span>;
+                                  return <span key={ti} style={{ color: "#334155", fontSize: 18, lineHeight: 1, fontWeight: 200 }}>—</span>;
                                 }
                                 const isCtr = t.startsWith("[");
                                 const n = t.replace(/[\[\]]/g, "");
                                 const num = parseInt(n);
                                 if (isNaN(num)) return null;
-                                const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
+                                // Só mostra bolinha no número central
+                                if (isCtr) {
+                                  const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
+                                  return (
+                                    <div key={ti} style={{
+                                      width: 58, height: 58, borderRadius: "50%",
+                                      background: bg, border: "3px solid #c9a84c",
+                                      display: "flex", alignItems: "center", justifyContent: "center",
+                                      fontSize: 20, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                                      boxShadow: "0 0 24px rgba(201,168,76,0.7)", flexShrink: 0
+                                    }}>{n}</div>
+                                  );
+                                }
+                                // Números vizinhos: só texto
                                 return (
-                                  <div key={ti} style={{
-                                    width: isCtr ? 56 : 42, height: isCtr ? 56 : 42, borderRadius: "50%",
-                                    background: bg, border: isCtr ? "3px solid #c9a84c" : "1px solid #333",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: isCtr ? 18 : 13, fontWeight: 900, color: "#fff", fontFamily: "monospace",
-                                    boxShadow: isCtr ? "0 0 20px rgba(201,168,76,0.6)" : "none", flexShrink: 0
-                                  }}>{n}</div>
+                                  <span key={ti} style={{
+                                    fontSize: 14, fontWeight: 700, color: "#94a3b8",
+                                    fontFamily: "monospace", minWidth: 22, textAlign: "center"
+                                  }}>{n}</span>
                                 );
                               })}
                             </div>

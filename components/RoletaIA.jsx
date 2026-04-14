@@ -627,7 +627,7 @@ function RouletteTable({ result }) {
   };
 
   const getChip = (n) => {
-    if (chipNums.includes(n)) return isCenter(n) ? "#c9a84c" : "#f0d060";
+    if (chipNums.includes(n)) return isCenter(n) ? "#1e90ff" : "#f0d060";
     if (gatilhoNums.includes(n)) return "#ffd740";
     return null;
   };
@@ -748,7 +748,7 @@ function RouletteTable({ result }) {
       <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
         {isBoa && <>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c" }}/>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#1e90ff" }}/>
             <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>CENTRAL</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -1131,18 +1131,21 @@ export default function RoletaIA() {
             {result && (
               <div style={{ marginTop: 16 }}>
 
-                {/* 1. DECISÃO RÁPIDA */}
+                {/* 1. ANÁLISE GERAL DA MESA */}
                 <div style={{
                   background: result.status_mesa === "BOA" ? "rgba(0,230,118,0.07)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.07)" : "rgba(255,215,64,0.07)",
                   border: `3px solid ${statusColor}`, borderRadius: 20, padding: "22px 16px", marginBottom: 14, textAlign: "center"
                 }}>
+                  <div style={{ fontSize: 9, letterSpacing: 4, color: statusColor, fontFamily: "monospace", marginBottom: 14, opacity: 0.7 }}>
+                    ANÁLISE GERAL DA MESA
+                  </div>
                   <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 8 }}>
-                    {result.status_mesa === "BOA" ? "✅" : result.status_mesa === "EVITAR" ? "🚫" : "⏳"}
+                    {result.status_mesa === "BOA" ? "✅" : result.status_mesa === "EVITAR" ? "🔴" : "⏳"}
                   </div>
-                  <div style={{ fontSize: 32, fontWeight: 900, color: statusColor, fontFamily: "monospace", letterSpacing: 4, marginBottom: 6 }}>
-                    {result.status_mesa === "BOA" ? "ENTRAR" : result.status_mesa === "EVITAR" ? "NÃO ENTRAR" : "AGUARDAR"}
+                  <div style={{ fontSize: result.status_mesa === "AGUARDAR" ? 18 : 28, fontWeight: 900, color: statusColor, fontFamily: "monospace", letterSpacing: 2, marginBottom: 6, lineHeight: 1.2 }}>
+                    {result.status_mesa === "BOA" ? "MESA PAGANDO" : result.status_mesa === "EVITAR" ? "CORRE!" : "AGUARDAR PRÓXIMAS JOGADAS"}
                   </div>
-                  <div style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2 }}>
+                  <div style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, marginTop: 8 }}>
                     CONFIANÇA: <span style={{ color: statusColor, fontWeight: 700 }}>{result.confianca}%</span>
                   </div>
                   <div style={{ height: 4, background: "#1a2030", borderRadius: 2, overflow: "hidden", marginTop: 10 }}>
@@ -1159,7 +1162,7 @@ export default function RoletaIA() {
                   if (centerNums.length === 0) return null;
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #c9a84c40", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                      <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎯 APOSTAR AGORA</div>
+                      <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎰 GATILHO</div>
                       <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
                         {centerNums.map((num, i) => {
                           const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
@@ -1181,21 +1184,65 @@ export default function RoletaIA() {
                   );
                 })()}
 
-                {/* 2B. GATILHO A ESPERAR (quando AGUARDAR/EVITAR) */}
-                {result.status_mesa !== "BOA" && result.gatilho && (
-                  <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>⏭️ AGUARDAR ESTE GATILHO</div>
-                    <div style={{ fontSize: 15, color: "#e2e8f0", lineHeight: 1.8, fontWeight: 600 }}>{result.gatilho}</div>
-                  </div>
-                )}
+                {/* 2B. JOGADA INDICADA (quando AGUARDAR/EVITAR) */}
+                {result.status_mesa !== "BOA" && result.gatilho && (() => {
+                  const cm = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/g) || []) : [];
+                  const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  return (
+                    <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎯 JOGADA INDICADA</div>
+                      <div style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.8, fontWeight: 600 }}>{result.gatilho}</div>
+                      {cn.length > 0 && (
+                        <div style={{ marginTop: 12, borderTop: "1px solid #1a2030", paddingTop: 12 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                            {cn.map((num, i) => {
+                              const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                              return (
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
+                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #ffd740", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#ffd740", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
+                            Aposte neste número — proteja com 3 fichas para cada lado
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
-                {/* 3. PRÓXIMO GATILHO (quando BOA) */}
-                {result.status_mesa === "BOA" && result.gatilho && (
-                  <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "12px 16px", marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 6 }}>⏭️ PRÓXIMO GATILHO</div>
-                    <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.7 }}>{result.gatilho}</div>
-                  </div>
-                )}
+                {/* 3. JOGADA INDICADA (quando BOA) */}
+                {result.status_mesa === "BOA" && result.gatilho && (() => {
+                  const cm = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/g) || []) : [];
+                  const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  return (
+                    <div style={{ background: "#0d1118", border: "1px solid #1e90ff40", borderRadius: 14, padding: "12px 16px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#1e90ff", letterSpacing: 3, fontFamily: "monospace", marginBottom: 8 }}>🎯 JOGADA INDICADA</div>
+                      <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.7 }}>{result.gatilho}</div>
+                      {cn.length > 0 && (
+                        <div style={{ marginTop: 10, borderTop: "1px solid #1a2030", paddingTop: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                            {cn.map((num, i) => {
+                              const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                              return (
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
+                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #1e90ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#1e90ff", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
+                            Aposte neste número — proteja com 3 fichas para cada lado
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* 4. ALERTA */}
                 {result.alerta && (

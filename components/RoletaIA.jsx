@@ -917,7 +917,21 @@ export default function RoletaIA() {
       userContent.push({ type: "text", text: `ATUALIZAÇÃO DE ANÁLISE.\n\nHistórico completo anterior (${prevNums.length} números, mais antigo primeiro): ${prevNums.join(", ")}.\n\nNOVO número que acabou de cair: ${lastNum}.\n\nHistórico completo agora (${nums.length} números): ${nums.join(", ")}.\n\nAtualize a análise levando em conta TODO o histórico acima incluindo o novo número ${lastNum}. A análise anterior indicou: status=${result?.status_mesa}, confiança=${result?.confianca}%. ${contextNote}` });
     } else if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
-      userContent.push({ type: "text", text: `Leia os últimos 20 números visíveis neste print do cassino (bolinhas coloridas, do mais recente para o mais antigo). Faça a análise completa de todas as estratégias e retorne os resultados concretos — qual número apostar e por quê. ${nums.length > 0 ? `Números adicionados manualmente: ${nums.join(", ")}.` : ""}${contextNote}` });
+      userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT:
+Os números aparecem em grade. Leia EXATAMENTE como um livro: esquerda→direita, linha por linha, cima→baixo.
+O número no CANTO SUPERIOR ESQUERDO = SAIU POR ÚLTIMO (mais recente).
+O 2º número (ao lado do 1º) = saiu antes. O 3º = antes ainda. E assim por diante.
+
+EXEMPLO de como ler: se a 1ª linha mostra [2, 8, 13, 16, 18, 32, 10, 15, 1], então:
+- 2 = mais recente (saiu por último)
+- 8 = saiu antes do 2
+- 13 = saiu antes do 8
+- ... e assim successivamente
+
+Extraia os PRIMEIROS 20 números desta leitura (= os 20 mais recentes).
+Em numeros_identificados retorne: [2_mais_recente, 8_anterior, 13_anterior, ..., 20º_mais_antigo]
+
+Faça a análise completa com esses 20 números e indique qual número apostar. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
     } else {
       userContent.push({ type: "text", text: `Histórico dos últimos ${nums.length} números (do MAIS RECENTE para o MAIS ANTIGO): ${[...nums].reverse().join(", ")}. O MAIS RECENTE = ${nums[nums.length-1]} = gatilho atual para análise NSP.${contextNote}` });
     }
@@ -1093,7 +1107,7 @@ export default function RoletaIA() {
 
               {result && (
                 <div style={{ fontSize: 10, color: "#c9a84c", fontFamily: "monospace", marginBottom: 8, textAlign: "center", letterSpacing: 1 }}>
-                  ✦ Digite o número que caiu e toque OK — análise atualiza automaticamente
+                  ✦ Digite o número que acabou de sair. O 7º mais antigo sai automaticamente.
                 </div>
               )}
               {/* Numpad */}
@@ -1116,7 +1130,7 @@ export default function RoletaIA() {
               {/* Últimos 7 números — janela deslizante */}
               <div style={{ margin: "12px 0 6px", borderTop: "1px solid #1a2030", paddingTop: 12 }}>
                 <div style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, marginBottom: 8 }}>
-                  ÚLTIMOS 7 NÚMEROS {numbers.length > 0 ? `(total acumulado: ${numbers.length})` : ""}
+                  7 ÚLTIMOS — MAIS RECENTE À ESQUERDA {numbers.length > 7 ? `(+${numbers.length - 7} em análise)` : ""}
                 </div>
                 {numbers.length === 0
                   ? <span style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace" }}>Envie um print ou adicione números manualmente</span>

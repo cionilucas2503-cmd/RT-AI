@@ -709,7 +709,7 @@ export default function RoletaIA() {
     setInputError(false);
   }
 
-  function addNumber(autoAnalyze = false) {
+  function addNumber(autoAnalyze = true) {
     const v = parseInt(inputVal);
     if (isNaN(v) || v < 0 || v > 36) {
       setInputError(true);
@@ -722,9 +722,9 @@ export default function RoletaIA() {
       setTimeout(() => setShowWin(false), 3000);
     }
     setNumbers(prev => {
-      // Rolling window: keep last 20 for AI analysis, display shows last 7
+      // Rolling window: sempre exatamente 10 números
       const full = [...prev, v];
-      const updated = full.length > 20 ? full.slice(-20) : full;
+      const updated = full.length > 10 ? full.slice(-10) : full;
       if (autoAnalyze || result) {
         setTimeout(() => runAnalysis(updated), 100);
       }
@@ -773,8 +773,8 @@ export default function RoletaIA() {
   async function runAnalysis(updatedNumbers) {
     const nums = updatedNumbers || numbers;
     const isUpdate = false; // Every analysis is now a fresh full analysis
-    if (nums.length < 5 && !imageBase64) {
-      setError("Adicione pelo menos 5 números ou envie um print da mesa.");
+    if (nums.length < 10 && !imageBase64) {
+      setError("Adicione pelo menos 10 números ou envie um print da mesa.");
       return;
     }
     setError(null);
@@ -793,33 +793,28 @@ export default function RoletaIA() {
 
     if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
-      userContent.push({ type: "text", text: `LEITURA DO PRINT DE ROLETA:
+      userContent.push({ type: "text", text: `LEITURA DO PRINT DE ROLETA — PRIMEIRA LINHA APENAS:
 
-PASSO 1 — ANTES DE QUALQUER COISA: Olhe para o primeiro número do CANTO SUPERIOR ESQUERDO (primeira fileira, posição mais à esquerda). Escreva esse número no campo "canto_superior_esquerdo" do JSON.
+Leia SOMENTE os 10 números da PRIMEIRA LINHA da grade (esquerda → direita).
+O número mais à ESQUERDA = mais recente. O mais à DIREITA = 10º.
 
-PASSO 2 — Liste a primeira linha, da ESQUERDA para DIREITA:
-Linha 1: n1(esq), n2, n3, ..., n10(dir)
+Exemplo: Linha 1 = 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
+→ canto_superior_esquerdo = 25
+→ numeros_identificados = [25, 11, 27, 28, 24, 16, 23, 31, 12, 26]
 
-PASSO 3 — numeros_identificados[0] = o número do CANTO SUPERIOR ESQUERDO (o mesmo que você colocou em canto_superior_esquerdo).
+RETORNE EXATAMENTE 10 NÚMEROS — apenas da primeira linha, nada mais.
+VERIFICAÇÃO: numeros_identificados[0] == canto_superior_esquerdo?
 
-VERIFICAÇÃO: canto_superior_esquerdo == numeros_identificados[0]? Se não, você errou a ordem.
-
-Exemplo com os números DESTE cassino:
-Linha 1 vista na imagem: 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
-→ canto_superior_esquerdo = 25 (número mais recente a sair na roleta)
-→ numeros_identificados = [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, ...]
-
-Faça a análise completa com esses 10 números. ${nums.length > 0 ? "Números adicionados manualmente após ter identificado os numeros_identificados: " + nums.join(", ") + "." : ""}${contextNote}` });
+Faça a análise completa com esses 10 números.${contextNote}` });
     } else {
-      userContent.push({ type: "text", text: `ANÁLISE COMPLETA — faça do zero, avalie todas as 7 estratégias.
+      const nums10 = nums.slice(-10);
+      userContent.push({ type: "text", text: `ANÁLISE COMPLETA — faça do zero com estes 10 números.
 
-Histórico completo (${nums.length} números, do MAIS RECENTE para o MAIS ANTIGO):
-${[...nums].reverse().join(", ")}
+10 números para análise (do MAIS RECENTE para o MAIS ANTIGO):
+${[...nums10].reverse().join(", ")}
 
-Número mais recente: ${nums[nums.length-1]}
-Número mais antigo no histórico: ${nums[0]}
+Mais recente: ${nums10[nums10.length-1]} | Mais antigo: ${nums10[0]}
 
-Analise todas as estratégias do zero contra este histórico, escolha a mais forte ou as 2 mais fortes, e retorne o JSON.
 ${contextNote}` });
     }
 
@@ -891,8 +886,10 @@ ${contextNote}` });
           // AI returned order is inverted — reverse the whole array to correct it
           nums20 = [...nums20].reverse();
         }
-        // nums20 is now [newest→oldest]; store as [oldest→newest] for slice(-7) logic
-        setNumbers([...nums20].reverse());
+        // Manter apenas os 10 primeiros (primeira linha da grade)
+        const nums10 = nums20.slice(0, 10);
+        // Armazenar como [oldest→newest] para slice(-7) funcionar corretamente
+        setNumbers([...nums10].reverse());
       }
       // After first analysis, clear imageBase64 so updates use full text history
       setImageBase64(null);
@@ -1023,7 +1020,7 @@ ${contextNote}` });
 
               {result && (
                 <div style={{ fontSize: 10, color: "#c9a84c", fontFamily: "monospace", marginBottom: 8, textAlign: "center", letterSpacing: 1 }}>
-                  ✦ Digite o número que acabou de sair. O 7º mais antigo sai automaticamente.
+                  ✦ Digite o número que acabou de sair. A análise é refeita automaticamente com os 10 últimos.
                 </div>
               )}
               {/* Numpad */}

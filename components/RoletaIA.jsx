@@ -694,12 +694,12 @@ function RouletteTable({ result, nspAlvoNum }) {
   const isAguardar = status === "AGUARDAR";
   const isBoa = status === "BOA";
 
-  // Main chip numbers from apostar_em + NSP alvo ±3 neighbors
+  // Chip numbers ONLY when status is BOA (verde) — amarelo/vermelho = sem destaque
   const mainChipNums = isBoa ? parseChipNumbers(result.apostar_em) : [];
   const nspChipNums = (isBoa && nspAlvoNum !== null && nspAlvoNum !== undefined)
     ? getWheelBet(nspAlvoNum, 3).all : [];
   const chipNums = [...new Set([...mainChipNums, ...nspChipNums])];
-  const gatilhoNums = !isBoa ? parseChipNumbers(result.gatilho) : [];
+  const gatilhoNums = [];  // nunca destaca gatilhos — jogada só quando verde
 
   const isCenter = (n) => {
     // Main analysis centrals
@@ -773,9 +773,9 @@ function RouletteTable({ result, nspAlvoNum }) {
         {isEvitar ? "🚫 MESA INATIVA" : isAguardar ? "📍 AONDE COLOCAR SUAS FICHAS" : "🎯 COLOQUE AS FICHAS AQUI"}
       </div>
 
-      {isAguardar && result.gatilho && (
-        <div style={{ background: "rgba(255,215,64,0.08)", border: "1px solid #ffd74040", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#ffd740", lineHeight: 1.6 }}>
-          {result.gatilho}
+      {isAguardar && (
+        <div style={{ background: "rgba(255,215,64,0.06)", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#ffd740", fontFamily: "monospace", textAlign: "center" }}>
+          ⏳ Aguarde a próxima rodada
         </div>
       )}
 
@@ -1366,39 +1366,13 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   );
                 })()}
 
-                {/* 2B. JOGADA INDICADA (quando AGUARDAR/EVITAR) */}
-                {result.status_mesa !== "BOA" && result.gatilho && (() => {
-                  const cm = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/g) || []) : [];
-                  const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
-                  return (
-                    <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                      <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎯 JOGADA INDICADA</div>
-                      {gatilhoAtivo ? (
-                        <>
-                          <div style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.8, fontWeight: 600 }}>{result.gatilho}</div>
-                          {cn.length > 0 && (
-                            <div style={{ marginTop: 12, borderTop: "1px solid #1a2030", paddingTop: 12 }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                                {cn.map((num, i) => {
-                                  const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
-                                  return (
-                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                      {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
-                                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #ffd740", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <div style={{ fontSize: 11, color: "#ffd740", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
-                                Aposte neste número — proteja com 3 fichas para cada lado
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : aguardarFrase}
-                    </div>
-                  );
-                })()}
+                {/* 2B. JOGADA INDICADA (quando AGUARDAR/EVITAR) — sempre mostra aguardar */}
+                {result.status_mesa !== "BOA" && (
+                  <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎯 JOGADA INDICADA</div>
+                    {aguardarFrase}
+                  </div>
+                )}
 
                 {/* 3. JOGADA INDICADA (quando BOA) */}
                 {result.status_mesa === "BOA" && result.gatilho && (() => {
@@ -1475,7 +1449,7 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
 
                 {/* 5. NÚMEROS DA JOGADA — faixa com central azul + 3 vizinhos amarelos */}
                 {(() => {
-                  if (!result.apostar_em || !gatilhoAtivo) return (
+                  if (result.status_mesa !== "BOA" || !result.apostar_em) return (
                     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎲 NÚMEROS DA JOGADA</div>
                       {aguardarFrase}

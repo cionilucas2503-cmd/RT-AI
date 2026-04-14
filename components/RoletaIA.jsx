@@ -602,44 +602,55 @@ function RouletteTable({ result }) {
 
   const isCenter = (n) => {
     if (!result.apostar_em) return false;
-    const matches = result.apostar_em.match(/\[(\d+)\]/g);
-    if (!matches) return false;
-    return matches.some(m => parseInt(m.replace(/[\[\]]/g,"")) === n);
+    const m = result.apostar_em.match(/\[(\d+)\]/g);
+    return m ? m.some(x => parseInt(x.replace(/[\[\]]/g, "")) === n) : false;
   };
 
-  // Wheel sequence
-  const WHEEL_SEQ = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-  const total = WHEEL_SEQ.length;
-  const cx = 150, cy = 150, r = 130, rInner = 75;
+  const getChipColor = (n) => {
+    if (chipNums.includes(n)) return isCenter(n) ? "#c9a84c" : "#f0d060";
+    if (gatilhoNums.includes(n)) return "#ffd740";
+    return null;
+  };
 
-  const getColor = (n) => {
-    if (isEvitar) return n === 0 ? "#1a3a1a" : "#1a1a1a";
+  const getBg = (n) => {
+    if (isEvitar) return n === 0 ? "#0d2b0d" : "#111";
     if (n === 0) return "#1b5e20";
-    return RED_NUM.has(n) ? "#b71c1c" : "#111";
+    return RED_NUM.has(n) ? "#7f1010" : "#141414";
   };
 
-  const slices = WHEEL_SEQ.map((n, i) => {
-    const angleStep = (2 * Math.PI) / total;
-    const startAngle = i * angleStep - Math.PI / 2 - angleStep / 2;
-    const endAngle = startAngle + angleStep;
-    const x1 = cx + r * Math.cos(startAngle);
-    const y1 = cy + r * Math.sin(startAngle);
-    const x2 = cx + r * Math.cos(endAngle);
-    const y2 = cy + r * Math.sin(endAngle);
-    const xi1 = cx + rInner * Math.cos(startAngle);
-    const yi1 = cy + rInner * Math.sin(startAngle);
-    const xi2 = cx + rInner * Math.cos(endAngle);
-    const yi2 = cy + rInner * Math.sin(endAngle);
-    const midAngle = (startAngle + endAngle) / 2;
-    const textR = (r + rInner) / 2;
-    const tx = cx + textR * Math.cos(midAngle);
-    const ty = cy + textR * Math.sin(midAngle);
-    const haChip = chipNums.includes(n);
-    const isGatilho = gatilhoNums.includes(n);
-    const isCtr = isCenter(n);
-    const hasHighlight = haChip || isGatilho;
-    return { n, startAngle, endAngle, x1, y1, x2, y2, xi1, yi1, xi2, yi2, tx, ty, midAngle, haChip, isGatilho, isCtr, hasHighlight };
-  });
+  const Cell = ({ n, w = 38, h = 27 }) => {
+    const chip = getChipColor(n);
+    const ctr = isCenter(n);
+    return (
+      <div style={{
+        width: w, height: h, background: getBg(n),
+        border: `1px solid ${chip ? chip : "#2a2a2a"}`,
+        borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: n >= 10 ? 10 : 11, fontWeight: 800, color: isEvitar ? "#2a2a2a" : "#fff",
+        fontFamily: "monospace", position: "relative", flexShrink: 0,
+        boxShadow: ctr ? `0 0 8px ${chip}` : "none"
+      }}>
+        {n}
+        {chip && <div style={{
+          position: "absolute", top: -4, right: -4, zIndex: 3,
+          width: ctr ? 10 : 8, height: ctr ? 10 : 8, borderRadius: "50%",
+          background: chip, border: "1px solid #000",
+          boxShadow: ctr ? `0 0 6px ${chip}` : "none"
+        }}/>}
+      </div>
+    );
+  };
+
+  // Layout matching the reference image exactly
+  const topNums    = [3, 26, 0, 32];
+  const rightNums  = [15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30];
+  const bottomNums = [8, 23, 10];
+  const leftNums   = [5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35]; // bottom→top, reversed to render top→bottom
+
+  const GAP = 2;
+  const CELL_H = 27;
+  const CELL_W = 38;
+  const centerH = leftNums.length * (CELL_H + GAP) - GAP;
 
   return (
     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 14, marginBottom: 14 }}>
@@ -648,65 +659,64 @@ function RouletteTable({ result }) {
       </div>
 
       {isAguardar && result.gatilho && (
-        <div style={{ background: "rgba(255,215,64,0.08)", border: "1px solid #ffd74040", borderRadius: 10, padding: "10px 12px", marginBottom: 12, fontSize: 12, color: "#ffd740", lineHeight: 1.6 }}>
+        <div style={{ background: "rgba(255,215,64,0.08)", border: "1px solid #ffd74040", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#ffd740", lineHeight: 1.6 }}>
           {result.gatilho}
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <svg width="300" height="300" viewBox="0 0 300 300" style={{ filter: isEvitar ? "grayscale(1) brightness(0.4)" : "none" }}>
-          {/* Outer ring background */}
-          <circle cx={cx} cy={cy} r={r} fill="#0a0a0a" stroke="#2a2a2a" strokeWidth="1"/>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: GAP }}>
 
-          {/* Slices */}
-          {slices.map(({ n, startAngle, endAngle, x1, y1, x2, y2, xi1, yi1, xi2, yi2, tx, ty, midAngle, haChip, isGatilho, isCtr }) => {
-            const path = `M ${xi1} ${yi1} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} L ${xi2} ${yi2} A ${rInner} ${rInner} 0 0 0 ${xi1} ${yi1} Z`;
-            const fill = getColor(n);
-            const strokeColor = (haChip || isGatilho) ? (isCtr ? "#c9a84c" : haChip ? "#f0d060" : "#ffd740") : "#222";
-            const strokeW = (haChip || isGatilho) ? (isCtr ? 2.5 : 1.5) : 0.5;
-            const chipR = 6;
-            const chipX = cx + (r - 10) * Math.cos((startAngle + endAngle) / 2);
-            const chipY = cy + (r - 10) * Math.sin((startAngle + endAngle) / 2);
-            return (
-              <g key={n}>
-                <path d={path} fill={fill} stroke={strokeColor} strokeWidth={strokeW} />
-                <text
-                  x={tx} y={ty}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fontSize={n >= 10 ? "7" : "8"}
-                  fontWeight="bold"
-                  fill={isEvitar ? "#333" : "#fff"}
-                  transform={`rotate(${(midAngle * 180 / Math.PI) + 90}, ${tx}, ${ty})`}
-                  style={{ fontFamily: "monospace" }}
-                >{n}</text>
-                {haChip && (
-                  <circle cx={chipX} cy={chipY} r={chipR}
-                    fill={isCtr ? "#c9a84c" : "#f0d060"}
-                    stroke="#000" strokeWidth="1"
-                    style={{ filter: isCtr ? "drop-shadow(0 0 4px #c9a84c)" : "none" }}
-                  />
-                )}
-                {isGatilho && !haChip && (
-                  <circle cx={chipX} cy={chipY} r={5}
-                    fill="#ffd740" stroke="#000" strokeWidth="1"
-                  />
-                )}
-              </g>
-            );
-          })}
+        {/* TOP: 3 - 26 - 0 - 32 */}
+        <div style={{ display: "flex", gap: GAP }}>
+          {topNums.map(n => <Cell key={n} n={n} w={n === 0 ? 50 : CELL_W} h={26} />)}
+        </div>
 
-          {/* Inner circle */}
-          <circle cx={cx} cy={cy} r={rInner} fill="#0d1118" stroke="#1a2030" strokeWidth="2"/>
-          <circle cx={cx} cy={cy} r={rInner - 8} fill="#0a0c12" stroke="#1a2030" strokeWidth="1"/>
+        {/* MIDDLE: left column + center labels + right column */}
+        <div style={{ display: "flex", gap: GAP, alignItems: "flex-start" }}>
 
-          {/* Center text */}
-          <text x={cx} y={cy - 8} textAnchor="middle" fontSize="11" fill="#c9a84c" fontWeight="bold" style={{ fontFamily: "monospace" }}>ARIA</text>
-          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="8" fill="#4a5568" style={{ fontFamily: "monospace" }}>ROLETA</text>
-        </svg>
+          {/* LEFT (35 at top → 5 at bottom) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
+            {[...leftNums].reverse().map(n => <Cell key={n} n={n} w={CELL_W} h={CELL_H} />)}
+          </div>
+
+          {/* CENTER with sector labels */}
+          <div style={{
+            width: 130, height: centerH, background: "#060a0e",
+            border: "1px solid #111", borderRadius: 4,
+            display: "flex", flexDirection: "column",
+            justifyContent: "space-around", alignItems: "center",
+            padding: "10px 4px", gap: 0
+          }}>
+            {[
+              { label: "Zero",      border: true  },
+              { label: "Voisins",   border: true  },
+              { label: "Orphelins", border: true  },
+              { label: "Tier",      border: false },
+            ].map(({ label, border }) => (
+              <div key={label} style={{
+                width: "100%", textAlign: "center",
+                fontSize: 13, color: "#3a3a50",
+                fontFamily: "serif", fontStyle: "italic",
+                paddingBottom: border ? 8 : 0,
+                borderBottom: border ? "1px solid #111" : "none"
+              }}>{label}</div>
+            ))}
+          </div>
+
+          {/* RIGHT (15 at top → 30 at bottom) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
+            {rightNums.map(n => <Cell key={n} n={n} w={CELL_W} h={CELL_H} />)}
+          </div>
+        </div>
+
+        {/* BOTTOM: 8 - 23 - 10 */}
+        <div style={{ display: "flex", gap: GAP }}>
+          {bottomNums.map(n => <Cell key={n} n={n} w={CELL_W} h={26} />)}
+        </div>
       </div>
 
       {/* Legend */}
-      <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
         {isBoa && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -725,7 +735,7 @@ function RouletteTable({ result }) {
             <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>GATILHO A AGUARDAR</span>
           </div>
         )}
-        {isEvitar && <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>MESA SEM PADRÃO</span>}
+        {isEvitar && <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>MESA SEM PADRÃO — NÃO JOGAR</span>}
       </div>
     </div>
   );

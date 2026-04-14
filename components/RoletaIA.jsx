@@ -355,6 +355,7 @@ PROCEDIMENTO:
 {
   "status_mesa": "BOA" | "AGUARDAR" | "EVITAR",
   "confianca": número 0-100,
+  "canto_superior_esquerdo": número que está no canto superior ESQUERDO da grade (se houver imagem),
   "numeros_identificados": [lista de números se vier de imagem, senão null],
   "estrategias": {
     "terminal_simples": {"ativo": bool, "descricao": "Terminal X apareceu N vezes", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
@@ -1048,24 +1049,22 @@ Refaça a análise completa das 3 fases com o histórico atualizado.
 ${contextNote}` });
     } else if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
-      userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT DE ROLETA:
+      userContent.push({ type: "text", text: `LEITURA DO PRINT DE ROLETA:
 
-LEIA O GRID DA SEGUINTE FORMA — SEM EXCEÇÃO:
+PASSO 1 — ANTES DE QUALQUER COISA: Olhe para a célula do CANTO SUPERIOR ESQUERDO (primeira fileira, posição mais à esquerda). Escreva esse número no campo "canto_superior_esquerdo" do JSON.
 
-PASSO 1: Encontre o número na EXTREMA ESQUERDA da LINHA DO TOPO → esse é o MAIS RECENTE.
-PASSO 2: Continue lendo da esquerda para a direita nessa mesma linha.
-PASSO 3: Quando acabar a linha, continue da esquerda da linha seguinte.
+PASSO 2 — Liste a grade linha por linha, da ESQUERDA para DIREITA:
+Linha 1: n1(esq), n2, n3, ..., n10(dir)
+Linha 2: n11(esq), n12, ..., n20(dir)
 
-EXEMPLO COM OS NÚMEROS DESTE CASSINO:
-linha1: [25] [11] [27] [28] [24] [16] [23] [31] [12] [26]
-linha2: [34] [15] [33] [16] [30] [19] [34] [32] [21] [19]
+PASSO 3 — numeros_identificados[0] = o número do CANTO SUPERIOR ESQUERDO (o mesmo que você colocou em canto_superior_esquerdo).
 
-→ 25 = mais recente (1º da linha 1, lado esquerdo)
-→ 26 = 10º mais recente (último da linha 1, lado direito) — NÃO É O 1º!
-→ numeros_identificados CORRETO: [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, 34, 15, 33, 16, 30, 19, 34, 32, 21, 19]
-→ numeros_identificados ERRADO: [26, 12, 31, 23, 16, 24, 28, ...] ← NUNCA FAÇA ISSO
+VERIFICAÇÃO: canto_superior_esquerdo == numeros_identificados[0]? Se não, você errou a ordem.
 
-Extraia os primeiros 20 números desta forma e retorne em numeros_identificados: [mais_recente, 2º, ..., 20º]
+Exemplo com os números DESTE cassino:
+Linha 1 vista na imagem: 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
+→ canto_superior_esquerdo = 25
+→ numeros_identificados = [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, ...]
 
 Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
     } else {
@@ -1132,19 +1131,16 @@ Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números a
         setPrevBetNums([]);
       }
       if (parsed.numeros_identificados?.length > 0) {
-        // AI consistently reads each 10-column row RIGHT-TO-LEFT in grid format
-        // Fix: reverse each group of 10 numbers (each row) to restore left-to-right order
-        // Then reverse the whole array to store oldest-first (so slice(-7) = 7 most recent)
-        const raw = parsed.numeros_identificados;
-        const ROW_SIZE = 10;
-        const corrected = [];
-        for (let i = 0; i < raw.length; i += ROW_SIZE) {
-          // Each row from AI is backwards — reverse it to get correct left→right order
-          const row = raw.slice(i, i + ROW_SIZE).reverse();
-          corrected.push(...row);
+        let nums20 = [...parsed.numeros_identificados];
+        // AUTO-CORRECTION: use canto_superior_esquerdo to detect if AI returned inverted order
+        // If AI returned [26, 12, 31, ...] but canto_superior_esquerdo=25, we reverse the whole array
+        const cse = parsed.canto_superior_esquerdo;
+        if (cse !== undefined && cse !== null && nums20.length > 0 && nums20[0] !== cse) {
+          // AI returned order is inverted — reverse the whole array to correct it
+          nums20 = [...nums20].reverse();
         }
-        // corrected = [newest→oldest] in correct order; store as [oldest→newest]
-        setNumbers([...corrected].reverse());
+        // nums20 is now [newest→oldest]; store as [oldest→newest] for slice(-7) logic
+        setNumbers([...nums20].reverse());
       }
       // After first analysis, clear imageBase64 so updates use full text history
       setImageBase64(null);

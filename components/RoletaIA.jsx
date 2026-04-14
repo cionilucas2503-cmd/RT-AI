@@ -240,7 +240,19 @@ Aplique as regras matematicamente, sem variação.
    - "Analise os terminais e veja qual está aquecido..."
 
 ## SE RECEBER UMA IMAGEM:
-Leia TODOS os números visíveis na tela do cassino (bolinhas coloridas). Extraia os últimos 20 números (do mais recente para o mais antigo) e aplique TODA a análise automaticamente. Retorne os números identificados no campo "numeros_identificados".
+LEITURA OBRIGATÓRIA: Os números no print do cassino são exibidos em grade, lidos da ESQUERDA para DIREITA, linha por linha de CIMA para BAIXO.
+O número do CANTO SUPERIOR ESQUERDO é o MAIS RECENTE (último que saiu).
+Os números seguintes (leitura normal) são os anteriores em ordem cronológica inversa.
+
+PROCEDIMENTO:
+1. Leia todos os números visíveis
+2. O 1º número (canto superior esquerdo) = mais recente = GATILHO atual
+3. Use esse número + os 19 seguintes = 20 números de análise
+4. Ordene em "numeros_identificados" do MAIS RECENTE para o MAIS ANTIGO
+5. Aplique TODA a análise com esses 20 números
+
+EXEMPLO: Se o print mostra [35, 7, 24, 32, 4, 34, 29, 14, 16, 1, 14, 20, 16, 27, 22, 31, 2, 6, 25, 35...]
+→ 35 é o mais recente, análise usa: 35, 7, 24, 32, 4, 34, 29, 14, 16, 1, 14, 20, 16, 27, 22, 31, 2, 6, 25, 35
 
 ## GESTÃO DE BANCA (Flat Bet):
 - Stop Gain do dia: +20% da banca
@@ -787,6 +799,8 @@ export default function RoletaIA() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [bancaInicial, setBancaInicial] = useState("");
+  const [prevBetNums, setPrevBetNums] = useState([]);   // números da aposta anterior (central ±3)
+  const [showWin, setShowWin] = useState(false);          // figurinha de acerto
   const [bancaAtual, setBancaAtual] = useState("");
   const [inputError, setInputError] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState(null);
@@ -839,10 +853,14 @@ export default function RoletaIA() {
       setTimeout(() => setInputError(false), 800);
       return;
     }
+    // ✨ Verificar se o novo número bate com a aposta anterior
+    if (result && prevBetNums.length > 0 && prevBetNums.includes(v)) {
+      setShowWin(true);
+      setTimeout(() => setShowWin(false), 3000);
+    }
     setNumbers(prev => {
       const updated = [...prev, v];
       if (autoAnalyze || result) {
-        // Trigger re-analysis with updated numbers
         setTimeout(() => runAnalysis(updated), 100);
       }
       return updated;
@@ -946,6 +964,15 @@ export default function RoletaIA() {
 
       const parsed = JSON.parse(fixControlChars(clean));
       setResult(parsed);
+      // Salvar números da aposta atual para comparar na próxima jogada
+      if (parsed.apostar_em) {
+        const cm = parsed.apostar_em.match(/\[(\d+)\]/g) || [];
+        const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+        const betNums = cn.flatMap(num => getWheelBet(num, 3).all);
+        setPrevBetNums(betNums);
+      } else {
+        setPrevBetNums([]);
+      }
       if (parsed.numeros_identificados?.length > 0) {
         setNumbers(parsed.numeros_identificados);
       }
@@ -1764,6 +1791,47 @@ export default function RoletaIA() {
       <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, background: "rgba(7,9,14,0.95)", borderTop: "1px solid #1a2030", padding: "8px 16px", textAlign: "center", backdropFilter: "blur(10px)" }}>
         <div style={{ fontSize: 9, color: "#2a3040", fontFamily: "monospace", letterSpacing: 2 }}>ARIA • ANÁLISE PROFISSIONAL DE ROLETA • USE COM RESPONSABILIDADE</div>
       </div>
+
+      {/* 🏆 Figurinha de acerto — aparece quando o número previsto saiu */}
+      {showWin && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          pointerEvents: "none",
+          animation: "fadeInOut 3s ease forwards",
+        }}>
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
+            animation: "bounceIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55) forwards",
+          }}>
+            <img
+              src="/sticker-win.png"
+              alt="WIN!"
+              style={{ width: 180, height: 180, objectFit: "contain", filter: "drop-shadow(0 0 30px rgba(0,230,118,0.8))" }}
+            />
+            <div style={{
+              fontSize: 22, fontWeight: 900, color: "#00e676",
+              fontFamily: "monospace", letterSpacing: 4,
+              textShadow: "0 0 20px rgba(0,230,118,0.9)"
+            }}>ACERTOU! 🎯</div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInOut {
+          0%   { opacity: 0; }
+          15%  { opacity: 1; }
+          70%  { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes bounceIn {
+          0%   { transform: scale(0.2) rotate(-10deg); }
+          60%  { transform: scale(1.15) rotate(5deg); }
+          80%  { transform: scale(0.95) rotate(-3deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+      `}</style>
     </div>
   );
 }

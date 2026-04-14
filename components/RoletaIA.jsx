@@ -808,10 +808,41 @@ function RouletteTable({ result }) {
   const LX = 25, RX = 235;
   const CW = 36; // cell width uniform
 
+  // Wheel sections — matches European roulette wheel order
+  const topArcNums    = [0, 32, 15, 19];
+  const rightNums     = [4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8];
+  const bottomArcNums = [23, 10, 5, 24, 16];
+  const leftNums      = [33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+
   // Cell heights — right has fewer cells so taller, left more cells so shorter
   const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // ~32.7px — cells touch
   const CH_L = (BOT_Y - TOP_Y) / leftNums.length;   // ~28.3px — cells touch
   const CH_ARC = 28; // arc cells
+
+  // Build all cells with positions
+  const cells = [];
+  // Top arc (spread across top semicircle)
+  const topStep = 180 / (topArcNums.length + 1);
+  topArcNums.forEach((n, i) => {
+    const deg = 180 - topStep * (i + 1);
+    const rad = deg * Math.PI / 180;
+    cells.push({ n, x: CX + R * Math.cos(rad), y: TOP_Y - R * Math.sin(rad), rot: 90 - deg, ch: CH_ARC, rx: 8 });
+  });
+  // Right column (top to bottom)
+  rightNums.forEach((n, i) => {
+    cells.push({ n, x: RX, y: TOP_Y + CH_R * (i + 0.5), rot: 0, ch: CH_R, rx: 4 });
+  });
+  // Bottom arc (right to left, through bottom)
+  const botStep = 180 / (bottomArcNums.length + 1);
+  bottomArcNums.forEach((n, i) => {
+    const deg_cw = botStep * (i + 1);
+    const rad = deg_cw * Math.PI / 180;
+    cells.push({ n, x: CX + R * Math.cos(rad), y: BOT_Y + R * Math.sin(rad), rot: 90 + deg_cw, ch: CH_ARC, rx: 8 });
+  });
+  // Left column (top to bottom)
+  leftNums.forEach((n, i) => {
+    cells.push({ n, x: LX, y: TOP_Y + CH_L * (i + 0.5), rot: 0, ch: CH_L, rx: 4 });
+  });
 
   const pillPath = `M ${CX-R} ${TOP_Y} A ${R} ${R} 0 0 1 ${CX+R} ${TOP_Y} L ${CX+R} ${BOT_Y} A ${R} ${R} 0 0 1 ${CX-R} ${BOT_Y} Z`;
 
@@ -1004,8 +1035,6 @@ export default function RoletaIA() {
     setLoading(true);
     if (!isUpdate) setResult(null);
 
-    const nums = updatedNumbers || numbers;
-    const isUpdate = !!result && nums.length > 0;
     const allStrategies = [...STRATEGIES, ...customStrategies];
     const activeList = allStrategies.filter(s => activeStrategies.has(s.id));
     const activeNames = activeList.map(s => s.title).join(", ");

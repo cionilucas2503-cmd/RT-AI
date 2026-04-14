@@ -239,23 +239,41 @@ LÓGICA DE ENTRADA CORRETA:
 
 ## REGRAS DE DECISÃO — SEGUIR RIGOROSAMENTE:
 
-### CÁLCULO DE CONFIANÇA (metodologia rígida):
-- 1 estratégia FORTE (sem NSP confirmando): 40%
-- 1 estratégia FORTE + NSP FORTE confirmando: 65%
-- 2 estratégias FORTE + NSP FORTE confirmando: 80%
-- 3+ estratégias FORTE + NSP FORTE convergindo: 90%
-- Estratégia MÉDIO conta metade de uma FORTE
-- Subtraia 20% se estratégias apontam direções diferentes
-- Subtraia 15% se NSP não confirma nenhuma estratégia
+### CÁLCULO DE CONFIANÇA (metodologia rígida — 85% é difícil de atingir):
+- 1 estratégia FORTE sem NSP: 35%
+- 1 estratégia FORTE + NSP MÉDIO: 55%
+- 1 estratégia FORTE + NSP FORTE: 65%
+- 2 estratégias FORTE + NSP MÉDIO: 70%
+- 2 estratégias FORTE + NSP FORTE (convergência confirmada): 80%
+- 3 estratégias FORTE + NSP FORTE + todas convergindo mesmo número: 88%
+- 4+ estratégias FORTE + NSP FORTE + zero contradições: 94%
+- Cada estratégia MÉDIO adicional: +3% (máx +9%)
+- Subtraia 25% se estratégias apontam números diferentes
+- Subtraia 20% se NSP não confirma
+- Subtraia 15% se histórico < 15 jogadas (amostra pequena)
 
-### CLASSIFICAÇÃO — SEJA CONSERVADOR (na dúvida, AGUARDAR):
-- **MESA BOA**: confiança ≥ 75% E obrigatoriamente NSP FORTE confirmando + pelo menos 2 estratégias FORTE convergindo para o MESMO número
-- **AGUARDAR**: qualquer outra situação com algum sinal — padrões em formação mas sem convergência clara
-- **EVITAR**: confiança < 45%, sinais contraditórios ou histórico caótico sem padrões
+### CLASSIFICAÇÃO — REGRA DE OURO: O PADRÃO É SEMPRE AGUARDAR:
 
-⚠️ REGRA DE OURO: O PADRÃO é AGUARDAR. Só diga BOA quando houver evidência FORTE e CLARA.
-Um falso positivo (dizer BOA quando não é) é muito mais prejudicial que um falso negativo (dizer AGUARDAR quando poderia ser BOA).
-Se estiver em dúvida entre BOA e AGUARDAR → escolha AGUARDAR.
+- **MESA BOA** (exige TODOS os critérios simultaneamente):
+  ✓ Confiança ≥ 85%
+  ✓ NSP com sinal FORTE (2+ gatilhos recentes apontando para o MESMO alvo)
+  ✓ Pelo menos 2 outras estratégias (das 5 analisadas) com sinal FORTE
+  ✓ Todas as estratégias ativas convergindo para o MESMO número
+  ✓ Sem contradições entre estratégias
+
+- **AGUARDAR** (qualquer um destes é suficiente para aguardar):
+  • Confiança < 85%
+  • NSP MÉDIO ou FRACO (sem confirmação dupla de gatilhos)
+  • Apenas 1 estratégia FORTE (mesmo com NSP confirmando)
+  • Estratégias apontando para números diferentes
+  • Histórico com padrões recentes (< 10 jogadas) sem consolidação
+
+- **EVITAR**: confiança < 45%, sinais contraditórios fortes, zero padrões identificados
+
+⛔ LEI MÁXIMA: Se tiver qualquer dúvida, a resposta OBRIGATÓRIA é AGUARDAR.
+Uma aposta errada causa prejuízo. Uma aposta não feita não causa nenhum dano.
+Prefira sempre AGUARDAR a dar um falso sinal de BOA.
+Você deve indicar BOA em no MÁXIMO 1 de cada 5 análises — se está dizendo BOA mais que isso, está sendo permissivo demais.
 
 ### REGRA DE CONSISTÊNCIA:
 Para o mesmo histórico, a análise DEVE ser sempre idêntica. Aplique matematicamente, sem variação.
@@ -1128,14 +1146,18 @@ Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números a
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
   const statusBg = result ? (result.status_mesa === "BOA" ? "rgba(0,230,118,0.1)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.1)" : "rgba(255,215,64,0.1)") : null;
-  // gatilhoAtivo: só verdadeiro quando o sinal é genuinamente forte
-  // Exige: status BOA + confiança >= 70 + pelo menos 2 estratégias FORTE
+  // gatilhoAtivo: TRIPLA VERIFICAÇÃO — 85%+, 2 FORTE, NSP FORTE
+  // Se qualquer condição falhar → sem indicação de aposta
   const gatilhoAtivo = (() => {
     if (!result || result.status_mesa !== "BOA") return false;
-    if ((result.confianca || 0) < 70) return false;
+    if ((result.confianca || 0) < 85) return false;
     const estrategias = result.estrategias || {};
     const forteCount = Object.values(estrategias).filter(e => e.forca === "FORTE").length;
-    return forteCount >= 2;
+    if (forteCount < 2) return false;
+    // NSP deve ser pelo menos MÉDIO para confirmar
+    const nspForca = estrategias.numeros_puxam?.forca;
+    if (!nspForca || nspForca === "INATIVO" || nspForca === "FRACO") return false;
+    return true;
   })();
   const aguardarFrase = (
     <div style={{ fontSize: 14, color: "#ffd740", fontFamily: "monospace", fontWeight: 600, textAlign: "center", padding: "10px 0", letterSpacing: 1 }}>

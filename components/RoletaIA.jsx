@@ -23,12 +23,13 @@ Analise apenas estas 5 estratégias e encontre as 2 com maior sinal:
 Ordene pela força (FORTE > MÉDIO > FRACO). Selecione as 2 primeiras.
 Para cada uma, identifique o número ou região que ela aponta.
 
-FASE 2 — VALIDAÇÃO PELO NSP (estratégia 1):
-Pegue o número-alvo da estratégia #1 mais forte e o número-alvo da estratégia #2 mais forte.
-Consulte a tabela NSP (NUMEROS_QUE_SE_PUXAM) usando os últimos 3 números do histórico como gatilhos.
-Verifique: algum dos alvos NSP bate com o número-alvo da estratégia #1 OU da estratégia #2?
-  • Se SIM (pelo menos 1 bate) → APROVADO → passe para Fase 3
-  • Se NÃO (nenhum bate) → status = AGUARDAR, não indicar jogada
+FASE 2 — VALIDAÇÃO PELO NSP (estratégia 1) — EXIGENTE:
+Consulte a tabela NSP usando os últimos 3 números como gatilhos.
+EXIGÊNCIA: o alvo NSP deve bater com o número das estratégias E o sinal NSP deve ser FORTE (2+ gatilhos apontando para o mesmo alvo) ou MÉDIO (1 gatilho com confirmação de outra estratégia).
+  • Se NSP FORTE bate com estratégia #1 ou #2 → APROVADO
+  • Se NSP MÉDIO bate E há outra estratégia confirmando → APROVADO
+  • Se NSP FRACO ou não bate → status = AGUARDAR
+  • Se apenas 1 estratégia das fases anteriores for FORTE (não 2) → status = AGUARDAR mesmo com NSP confirmando
 
 FASE 3 — INDICAR A JOGADA:
 Use o número que foi validado pelo NSP na Fase 2.
@@ -238,22 +239,26 @@ LÓGICA DE ENTRADA CORRETA:
 
 ## REGRAS DE DECISÃO — SEGUIR RIGOROSAMENTE:
 
-### CÁLCULO DE CONFIANÇA (use sempre a mesma metodologia):
-- 1 estratégia FORTE: 45%
-- 2 estratégias FORTE: 65%
-- 3 estratégias FORTE: 75%
-- 4+ estratégias FORTE: 85%
-- Adicione 5% por cada estratégia MÉDIO extra
-- Subtraia 10% se houver estratégias contraditórias
+### CÁLCULO DE CONFIANÇA (metodologia rígida):
+- 1 estratégia FORTE (sem NSP confirmando): 40%
+- 1 estratégia FORTE + NSP FORTE confirmando: 65%
+- 2 estratégias FORTE + NSP FORTE confirmando: 80%
+- 3+ estratégias FORTE + NSP FORTE convergindo: 90%
+- Estratégia MÉDIO conta metade de uma FORTE
+- Subtraia 20% se estratégias apontam direções diferentes
+- Subtraia 15% se NSP não confirma nenhuma estratégia
 
-### CLASSIFICAÇÃO (baseada APENAS na confiança calculada):
-- **MESA BOA**: confiança ≥ 65% (2+ estratégias convergentes)
-- **AGUARDAR**: confiança entre 45% e 64%
-- **EVITAR**: confiança < 45% ou sinais fortemente contraditórios
+### CLASSIFICAÇÃO — SEJA CONSERVADOR (na dúvida, AGUARDAR):
+- **MESA BOA**: confiança ≥ 75% E obrigatoriamente NSP FORTE confirmando + pelo menos 2 estratégias FORTE convergindo para o MESMO número
+- **AGUARDAR**: qualquer outra situação com algum sinal — padrões em formação mas sem convergência clara
+- **EVITAR**: confiança < 45%, sinais contraditórios ou histórico caótico sem padrões
+
+⚠️ REGRA DE OURO: O PADRÃO é AGUARDAR. Só diga BOA quando houver evidência FORTE e CLARA.
+Um falso positivo (dizer BOA quando não é) é muito mais prejudicial que um falso negativo (dizer AGUARDAR quando poderia ser BOA).
+Se estiver em dúvida entre BOA e AGUARDAR → escolha AGUARDAR.
 
 ### REGRA DE CONSISTÊNCIA:
-Para o mesmo histórico de números, a análise DEVE ser sempre idêntica.
-Aplique as regras matematicamente, sem variação.
+Para o mesmo histórico, a análise DEVE ser sempre idêntica. Aplique matematicamente, sem variação.
 
 ## REGRAS DE ANÁLISE — OBRIGATÓRIAS:
 
@@ -1093,11 +1098,15 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
   const statusBg = result ? (result.status_mesa === "BOA" ? "rgba(0,230,118,0.1)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.1)" : "rgba(255,215,64,0.1)") : null;
-  // gatilhoAtivo: usado pelos cards GATILHO, JOGADA INDICADA e NÚMEROS DA JOGADA
-  const gatilhoAtivo = result
-    ? (result.estrategias?.numeros_puxam?.ativo ||
-       Object.values(result.estrategias || {}).some(e => e.ativo && e.forca !== "INATIVO" && e.forca !== "FRACO"))
-    : false;
+  // gatilhoAtivo: só verdadeiro quando o sinal é genuinamente forte
+  // Exige: status BOA + confiança >= 70 + pelo menos 2 estratégias FORTE
+  const gatilhoAtivo = (() => {
+    if (!result || result.status_mesa !== "BOA") return false;
+    if ((result.confianca || 0) < 70) return false;
+    const estrategias = result.estrategias || {};
+    const forteCount = Object.values(estrategias).filter(e => e.forca === "FORTE").length;
+    return forteCount >= 2;
+  })();
   const aguardarFrase = (
     <div style={{ fontSize: 14, color: "#ffd740", fontFamily: "monospace", fontWeight: 600, textAlign: "center", padding: "10px 0", letterSpacing: 1 }}>
       ⏳ Aguarde a próxima rodada

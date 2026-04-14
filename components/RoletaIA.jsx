@@ -1165,13 +1165,13 @@ export default function RoletaIA() {
                     : false;
                   const gatilhoAtivo = nspAtivo || outrasAtivas;
                   return (
-                    <div style={{ background: "#0d1118", border: `1px solid ${gatilhoAtivo ? "#c9a84c60" : "#1a2030"}`, borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                    <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎰 GATILHO</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                         <div style={{
                           width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
                           background: bgLast,
-                          border: `3px solid ${gatilhoAtivo ? "#c9a84c" : "#333"}`,
+                          border: `3px solid ${gatilhoAtivo ? "#c9a84c" : bgLast}`,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "monospace",
                           boxShadow: gatilhoAtivo ? "0 0 20px rgba(201,168,76,0.55)" : "none"

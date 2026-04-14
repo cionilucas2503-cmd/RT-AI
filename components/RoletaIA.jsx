@@ -1366,15 +1366,7 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   );
                 })()}
 
-                {/* 2B. JOGADA INDICADA (quando AGUARDAR/EVITAR) — sempre mostra aguardar */}
-                {result.status_mesa !== "BOA" && (
-                  <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎯 JOGADA INDICADA</div>
-                    {aguardarFrase}
-                  </div>
-                )}
-
-                {/* 3. JOGADA INDICADA (quando BOA) */}
+                {/* 3. JOGADA INDICADA — somente quando BOA (verde) */}
                 {result.status_mesa === "BOA" && result.gatilho && (() => {
                   const cm = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/g) || []) : [];
                   const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
@@ -1422,9 +1414,9 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   );
                 })()}
 
-                {/* 4. JOGADA DETALHADA — logo abaixo da JOGADA INDICADA */}
-                <details style={{ marginBottom: 14 }}>
-                  <summary style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 12, padding: "12px 16px", fontSize: 11, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
+                {/* 4. JOGADA DETALHADA — sempre visível (open quando não é BOA) */}
+                <details open={result.status_mesa !== "BOA"} style={{ marginBottom: 14 }}>
+                  <summary style={{ background: "#0d1118", border: `1px solid ${result.status_mesa === "BOA" ? "#1a2030" : "#ffd74040"}`, borderRadius: 12, padding: "12px 16px", fontSize: 11, color: result.status_mesa === "BOA" ? "#4a5568" : "#ffd740", fontFamily: "monospace", letterSpacing: 2, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
                     <span>📊 JOGADA DETALHADA</span><span>›</span>
                   </summary>
                   <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: "0 0 12px 12px", padding: 16, borderTop: "none" }}>
@@ -1447,8 +1439,8 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   </div>
                 </details>
 
-                {/* 5. NÚMEROS DA JOGADA — faixa com central azul + 3 vizinhos amarelos */}
-                {(() => {
+                {/* 5. NÚMEROS DA JOGADA — somente quando BOA */}
+                {result.status_mesa === "BOA" && (() => {
                   if (result.status_mesa !== "BOA" || !result.apostar_em) return (
                     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎲 NÚMEROS DA JOGADA</div>
@@ -1505,15 +1497,15 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   );
                 })()}
 
-                {/* 5. ALERTA */}
-                {result.alerta && (
+                {/* 5. ALERTA — somente quando BOA */}
+                {result.status_mesa === "BOA" && result.alerta && (
                   <div style={{ background: "rgba(255,61,87,0.08)", border: "1px solid rgba(255,61,87,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 14, fontSize: 13, color: "#ff6b7a", lineHeight: 1.6 }}>
                     ⚠️ {result.alerta}
                   </div>
                 )}
 
-                {/* 6. MESA VISUAL */}
-                <RouletteTable result={result} nspAlvoNum={nspAlvoNum} />
+                {/* 6. MESA VISUAL — somente quando BOA */}
+                {result.status_mesa === "BOA" && <RouletteTable result={result} nspAlvoNum={nspAlvoNum} />}
 
 
               </div>

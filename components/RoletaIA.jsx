@@ -661,8 +661,10 @@ function RouletteTable({ result }) {
   rightNums.forEach((n, i) => {
     cells.push({ n, x: RX, y: TOP_Y + CH_R * (i + 0.5), rot: 0, ch: CH_R, rx: 4 });
   });
+  // Bottom arc: reversed angles — 30 fica à direita (30°), 5 fica à esquerda (150°)
+  const BOT_ARC = [30, 60, 90, 120, 150];
   bottomArcNums.forEach((n, i) => {
-    const rad = ARC_ANGLES[i] * Math.PI / 180;
+    const rad = BOT_ARC[i] * Math.PI / 180;
     cells.push({ n, x: CX + R * Math.cos(rad), y: BOT_Y + R * Math.sin(rad), rot: 0, ch: CH_ARC, rx: 6 });
   });
   leftNums.forEach((n, i) => {

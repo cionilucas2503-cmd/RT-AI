@@ -738,7 +738,11 @@ export default function RoletaIA() {
   function handleImage(e) {
     const file = e.target.files[0];
     if (!file) return;
-    // Detect correct media type
+    // Nova imagem = zerar estado anterior para forcar releitura completa
+    setNumbers([]);
+    setResult(null);
+    setPrevBetNums([]);
+    setError(null);
     const mimeType = file.type || "image/jpeg";
     setImageMediaType(mimeType);
     const reader = new FileReader();

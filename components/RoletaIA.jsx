@@ -810,14 +810,21 @@ export default function RoletaIA() {
     setInputError(false);
   }
 
-  function addNumber() {
+  function addNumber(autoAnalyze = false) {
     const v = parseInt(inputVal);
     if (isNaN(v) || v < 0 || v > 36) {
       setInputError(true);
       setTimeout(() => setInputError(false), 800);
       return;
     }
-    setNumbers(prev => [...prev, v]);
+    setNumbers(prev => {
+      const updated = [...prev, v];
+      if (autoAnalyze || result) {
+        // Trigger re-analysis with updated numbers
+        setTimeout(() => runAnalysis(updated), 100);
+      }
+      return updated;
+    });
     setInputVal("");
     setInputError(false);
     setError(null);
@@ -835,30 +842,39 @@ export default function RoletaIA() {
     reader.readAsDataURL(file);
   }
 
-  async function analyze() {
-    if (numbers.length < 5 && !imageBase64) {
+  async function runAnalysis(updatedNumbers) {
+    const nums = updatedNumbers || numbers;
+    const isUpdate = !!result && !imageBase64;
+    if (nums.length < 5 && !imageBase64) {
       setError("Adicione pelo menos 5 números ou envie um print da mesa.");
       return;
     }
     setError(null);
     setLoading(true);
-    setResult(null);
+    if (!isUpdate) setResult(null);
 
+    const nums = updatedNumbers || numbers;
+    const isUpdate = !!result && !imageBase64;
     const allStrategies = [...STRATEGIES, ...customStrategies];
     const activeList = allStrategies.filter(s => activeStrategies.has(s.id));
     const activeNames = activeList.map(s => s.title).join(", ");
     const customBlock = customStrategies.filter(s => activeStrategies.has(s.id)).map(s =>
       `\n### ESTRATÉGIA PERSONALIZADA: ${s.title}\n${s.description}`
     ).join("\n");
-    const contextNote = `\n\nESTRATÉGIAS ATIVAS PARA ESTA ANÁLISE: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS DO USUÁRIO:" + customBlock : ""}\nAnalise APENAS as estratégias ativas listadas acima. Retorne apenas o JSON.`;
+    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}\nRetorne apenas o JSON.`;
 
     const userContent = [];
 
-    if (imageBase64) {
+    if (isUpdate) {
+      // Quick update — only new number context needed
+      const lastNum = nums[nums.length - 1];
+      const prevSummary = result ? `Análise anterior: status=${result.status_mesa}, confiança=${result.confianca}%.` : "";
+      userContent.push({ type: "text", text: `${prevSummary} Novo número que caiu: ${lastNum}. Histórico atualizado (mais recente por último): ${nums.join(", ")}. Total: ${nums.length} números. Atualize a análise considerando este novo número. ${contextNote}` });
+    } else if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
-      userContent.push({ type: "text", text: `Analise o print da mesa acima. ${numbers.length > 0 ? `Números adicionados manualmente: ${numbers.join(", ")}.` : ""}${contextNote}` });
+      userContent.push({ type: "text", text: `Analise o print da mesa acima. ${nums.length > 0 ? `Números adicionados: ${nums.join(", ")}.` : ""}${contextNote}` });
     } else {
-      userContent.push({ type: "text", text: `Histórico da mesa (da mais antiga para a mais recente): ${numbers.join(", ")}. Total: ${numbers.length} números.${contextNote}` });
+      userContent.push({ type: "text", text: `Histórico da mesa (mais antiga para mais recente): ${nums.join(", ")}. Total: ${nums.length} números.${contextNote}` });
     }
 
     try {
@@ -969,7 +985,7 @@ export default function RoletaIA() {
 
             {/* Manual numbers */}
             <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 12 }}>🔢 NÚMEROS MANUAIS</div>
+              {result ? (<div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 12 }}>🎲 PRÓXIMO NÚMERO QUE CAIU</div>) : (<div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 12 }}>🔢 HISTÓRICO DA MESA</div>)}
 
               <div style={{ marginBottom: 12, width: "100%" }}>
                 <input
@@ -994,6 +1010,11 @@ export default function RoletaIA() {
                 />
               </div>
 
+              {result && (
+                <div style={{ fontSize: 10, color: "#c9a84c", fontFamily: "monospace", marginBottom: 8, textAlign: "center", letterSpacing: 1 }}>
+                  ✦ Digite o número que caiu e toque OK — análise atualiza automaticamente
+                </div>
+              )}
               {/* Numpad */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                 {["1","2","3","4","5","6","7","8","9","0","⌫","OK"].map(k => (
@@ -1051,14 +1072,14 @@ export default function RoletaIA() {
             )}
 
             {/* Analyze button */}
-            <button onClick={analyze} disabled={loading} style={{
+            <button onClick={() => runAnalysis()} disabled={loading} style={{
               width: "100%", padding: "18px", background: loading ? "#1a2030" : "linear-gradient(135deg, #b8922a 0%, #f0d060 50%, #c9a84c 100%)",
               border: "none", borderRadius: 14, color: loading ? "#4a5568" : "#000",
               fontFamily: "monospace", fontSize: 16, letterSpacing: 4, fontWeight: 900,
               cursor: loading ? "not-allowed" : "pointer", transition: "all 0.2s",
               boxShadow: loading ? "none" : "0 4px 20px rgba(201,168,76,0.25)"
             }}>
-              {loading ? "⏳ ANALISANDO..." : "⚡ ANALISAR MESA"}
+              {loading ? "⏳ ANALISANDO..." : result ? "🔄 REANALISAR MESA" : "⚡ ANALISAR MESA"}
             </button>
 
             {/* Loading state */}

@@ -875,6 +875,7 @@ export default function RoletaIA() {
   const [numbers, setNumbers] = useState([]);
   const [inputVal, setInputVal] = useState("");
   const [imageBase64, setImageBase64] = useState(null);
+  const [imageMediaType, setImageMediaType] = useState("image/png");
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -956,11 +957,30 @@ export default function RoletaIA() {
   function handleImage(e) {
     const file = e.target.files[0];
     if (!file) return;
+    // Detect correct media type
+    const mimeType = file.type || "image/jpeg";
+    setImageMediaType(mimeType);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target.result;
       setImagePreview(dataUrl);
-      setImageBase64(dataUrl.split(",")[1]);
+      // Resize via canvas for optimal AI reading quality
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        // Keep original resolution up to 2000px wide for clarity
+        const maxW = 2000;
+        const scale = img.width > maxW ? maxW / img.width : 1;
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Use PNG for screenshots (lossless = numbers are readable)
+        const optimized = canvas.toDataURL("image/png");
+        setImageBase64(optimized.split(",")[1]);
+        setImageMediaType("image/png");
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }
@@ -991,22 +1011,35 @@ export default function RoletaIA() {
       const prevNums = nums.slice(0, -1);
       userContent.push({ type: "text", text: `ATUALIZAÇÃO DE ANÁLISE.\n\nHistórico completo anterior (${prevNums.length} números, mais antigo primeiro): ${prevNums.join(", ")}.\n\nNOVO número que acabou de cair: ${lastNum}.\n\nHistórico completo agora (${nums.length} números): ${nums.join(", ")}.\n\nAtualize a análise levando em conta TODO o histórico acima incluindo o novo número ${lastNum}. A análise anterior indicou: status=${result?.status_mesa}, confiança=${result?.confianca}%. ${contextNote}` });
     } else if (imageBase64) {
-      userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
-      userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT:
-Os números aparecem em grade. Leia EXATAMENTE como um livro: esquerda→direita, linha por linha, cima→baixo.
-O número no CANTO SUPERIOR ESQUERDO = SAIU POR ÚLTIMO (mais recente).
-O 2º número (ao lado do 1º) = saiu antes. O 3º = antes ainda. E assim por diante.
+      userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
+      userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT DE ROLETA:
 
-EXEMPLO de como ler: se a 1ª linha mostra [2, 8, 13, 16, 18, 32, 10, 15, 1], então:
-- 2 = mais recente (saiu por último)
-- 8 = saiu antes do 2
-- 13 = saiu antes do 8
-- ... e assim successivamente
+IDENTIFICAÇÃO DO FORMATO:
+Este print pode mostrar resultados de duas formas — identifique qual é:
+A) Grade com bolinhas coloridas (círculos): números em bolinhas vermelhas/pretas/verdes
+B) Grade com caixas retangulares em tabela (10 colunas): números em células, vermelhos ou brancos/pretos
 
-Extraia os PRIMEIROS 20 números desta leitura (= os 20 mais recentes).
-Em numeros_identificados retorne: [2_mais_recente, 8_anterior, 13_anterior, ..., 20º_mais_antigo]
+REGRA DE LEITURA (igual para ambos):
+• Leia da ESQUERDA para DIREITA, linha por linha, de CIMA para BAIXO
+• O número no CANTO SUPERIOR ESQUERDO = MAIS RECENTE (último sorteado)
+• Cada número seguinte na leitura = mais antigo que o anterior
 
-Faça a análise completa com esses 20 números e indique qual número apostar. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
+EXEMPLO com 10 colunas por linha:
+Linha 1: 17  25   6  36  24  12  12  15   1  27
+Linha 2: 24  36  23  31  17  28  11  27  20  21
+→ MAIS RECENTE = 17 (posição [1,1])
+→ 2º = 25 | 3º = 6 | 4º = 36 | 5º = 24 | 6º = 12 | 7º = 12 | 8º = 15 | 9º = 1 | 10º = 27
+→ 11º = 24 | 12º = 36 | 13º = 23 ... e assim por diante
+
+ATENÇÃO ESPECIAL:
+• Leia cada número com cuidado — diferencie 6 de 8, 1 de 7, 3 de 8, etc.
+• Não inverta a ordem — NUNCA comece do canto inferior direito
+• Números vermelhos e brancos/pretos são todos válidos (são apenas as cores da roleta)
+• O zero (0) é verde — inclua se aparecer
+
+Extraia os PRIMEIROS 20 números desta leitura e retorne em numeros_identificados: [mais_recente, 2º, 3º, ..., 20º]
+
+Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
     } else {
       userContent.push({ type: "text", text: `Histórico dos últimos ${nums.length} números (do MAIS RECENTE para o MAIS ANTIGO): ${[...nums].reverse().join(", ")}. O MAIS RECENTE = ${nums[nums.length-1]} = gatilho atual para análise NSP.${contextNote}` });
     }
@@ -1076,6 +1109,7 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
       }
       // After first analysis, clear imageBase64 so updates use full text history
       setImageBase64(null);
+      setImageMediaType("image/png");
     } catch (err) {
       setError("Erro: " + (err.message || JSON.stringify(err)));
     } finally {

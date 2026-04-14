@@ -1010,6 +1010,16 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
   const statusBg = result ? (result.status_mesa === "BOA" ? "rgba(0,230,118,0.1)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.1)" : "rgba(255,215,64,0.1)") : null;
+  // gatilhoAtivo: usado pelos cards GATILHO, JOGADA INDICADA e NÚMEROS DA JOGADA
+  const gatilhoAtivo = result
+    ? (result.estrategias?.numeros_puxam?.ativo ||
+       Object.values(result.estrategias || {}).some(e => e.ativo && e.forca !== "INATIVO" && e.forca !== "FRACO"))
+    : false;
+  const aguardarFrase = (
+    <div style={{ fontSize: 14, color: "#ffd740", fontFamily: "monospace", fontWeight: 600, textAlign: "center", padding: "10px 0", letterSpacing: 1 }}>
+      ⏳ Aguarde a próxima rodada
+    </div>
+  );
 
   const forcaColor = (f) => f === "FORTE" ? "#00e676" : f === "MEDIO" ? "#ffd740" : f === "FRACO" ? "#ff9800" : "#4a5568";
 
@@ -1287,25 +1297,29 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   return (
                     <div style={{ background: "#0d1118", border: "2px solid #ffd74060", borderRadius: 16, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#ffd740", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎯 JOGADA INDICADA</div>
-                      <div style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.8, fontWeight: 600 }}>{result.gatilho}</div>
-                      {cn.length > 0 && (
-                        <div style={{ marginTop: 12, borderTop: "1px solid #1a2030", paddingTop: 12 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                            {cn.map((num, i) => {
-                              const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
-                              return (
-                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                  {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
-                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #ffd740", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#ffd740", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
-                            Aposte neste número — proteja com 3 fichas para cada lado
-                          </div>
-                        </div>
-                      )}
+                      {gatilhoAtivo ? (
+                        <>
+                          <div style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.8, fontWeight: 600 }}>{result.gatilho}</div>
+                          {cn.length > 0 && (
+                            <div style={{ marginTop: 12, borderTop: "1px solid #1a2030", paddingTop: 12 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                {cn.map((num, i) => {
+                                  const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                                  return (
+                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
+                                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #ffd740", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div style={{ fontSize: 11, color: "#ffd740", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
+                                Aposte neste número — proteja com 3 fichas para cada lado
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : aguardarFrase}
                     </div>
                   );
                 })()}
@@ -1317,31 +1331,41 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #1e90ff40", borderRadius: 14, padding: "12px 16px", marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#1e90ff", letterSpacing: 3, fontFamily: "monospace", marginBottom: 8 }}>🎯 JOGADA INDICADA</div>
-                      <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.7 }}>{result.gatilho}</div>
-                      {cn.length > 0 && (
-                        <div style={{ marginTop: 10, borderTop: "1px solid #1a2030", paddingTop: 10 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                            {cn.map((num, i) => {
-                              const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
-                              return (
-                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                  {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
-                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #1e90ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#1e90ff", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
-                            Aposte neste número — proteja com 3 fichas para cada lado
-                          </div>
-                        </div>
-                      )}
+                      {gatilhoAtivo ? (
+                        <>
+                          <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.7 }}>{result.gatilho}</div>
+                          {cn.length > 0 && (
+                            <div style={{ marginTop: 10, borderTop: "1px solid #1a2030", paddingTop: 10 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                {cn.map((num, i) => {
+                                  const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                                  return (
+                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      {i > 0 && <span style={{ color: "#4a5568" }}>—</span>}
+                                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg, border: "2px solid #1e90ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>{num}</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div style={{ fontSize: 11, color: "#1e90ff", fontFamily: "monospace", marginTop: 8, opacity: 0.8 }}>
+                                Aposte neste número — proteja com 3 fichas para cada lado
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : aguardarFrase}
                     </div>
                   );
                 })()}
 
                 {/* 4. NÚMEROS DA JOGADA — faixa com central azul + 3 vizinhos amarelos */}
-                {result.apostar_em && (() => {
+                {(() => {
+                  if (!result.apostar_em || !gatilhoAtivo) return (
+                    <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎲 NÚMEROS DA JOGADA</div>
+                      {aguardarFrase}
+                    </div>
+                  );
                   const cm = result.apostar_em.match(/\[(\d+)\]/g) || [];
                   const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
                   if (cn.length === 0) return null;

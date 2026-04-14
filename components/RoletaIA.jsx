@@ -80,16 +80,36 @@ Gatilho: primeiro número do mesmo terminal do frio a sair.
 Aposta: o número frio ±3 vizinhos.
 
 ---
+### DUPLA E — NSP (Números que se Puxam) + Setor
+Estratégia 1: NSP — cada número tem alvos que tendem a sair após ele.
+A tabela NSP está hardcoded no sistema. Para cada número do histórico, seus alvos NSP são conhecidos.
+FORTE: 3+ dos últimos 5 números têm alvos NSP apontando para a MESMA região ou número.
+MÉDIO: 2 dos últimos 5 com alvos convergindo.
+FRACO: alvos dispersos sem convergência.
+
+Estratégia 2: Setor da Roda (mesma da Dupla A)
+Voisins: 0,2,3,4,7,12,15,18,19,21,22,25,26,28,29,32,35
+Tier: 5,8,10,11,13,16,23,24,27,30,33,36
+Orphelins: 1,6,9,14,17,20,31,34
+FORTE: mesmo setor 5+ dos últimos 10.
+
+DUPLA E ATIVA quando: alvos NSP de 3+ números recentes convergem para o mesmo setor dominante.
+Gatilho: o último número cujo alvo NSP primário está dentro do setor dominante.
+Aposta: o(s) alvo(s) NSP primário(s) do último número ±3 vizinhos na roda.
+
+Nota: os alvos NSP já estão calculados no sistema — não precisa inventar, use os dados da tabela.
+
+---
 
 ## PROCESSO DE ANÁLISE (do zero a cada análise)
 
-PASSO 1 — Avalie as 4 duplas:
+PASSO 1 — Avalie as 5 duplas (A, B, C, D, E):
 Para cada dupla, verifique se AMBAS as estratégias estão simultaneamente FORTES.
 Se apenas uma das duas está forte → dupla INATIVA (não conta).
 
 PASSO 2 — Selecione a dupla mais forte:
 Qual das 4 duplas tem as duas estratégias mais fortes e mais alinhadas?
-Se nenhuma dupla tiver ambas as estratégias FORTES → status=AGUARDAR.
+Se nenhuma das 5 duplas tiver ambas as estratégias FORTES → status=AGUARDAR.
 
 PASSO 3 — Verifique o último número:
 O último número inserido ativa/confirma a dupla selecionada?
@@ -107,7 +127,7 @@ PASSO 5 — Decisão:
 • Qualquer coisa abaixo → AGUARDAR
 • Contradições entre duplas → EVITAR
 
-⚠️ REGRA DE OURO: Só existe sinal quando AMBAS as estratégias da dupla estão FORTES. Uma estratégia sozinha nunca gera indicação. Máximo 1 BOA a cada 5 análises.
+⚠️ REGRA DE OURO: Só existe sinal quando AMBAS as estratégias da dupla escolhida estão FORTES. Uma estratégia sozinha nunca gera indicação. Máximo 1 BOA a cada 5 análises.
 
 ## SE RECEBER UMA IMAGEM:
 Leia SOMENTE a primeira linha (10 números), da esquerda→direita.
@@ -124,9 +144,10 @@ Stop Gain: +20% | Stop Loss: -10% | Stop sequência: 3 perdas consecutivas
   "confianca": número 0-100,
   "canto_superior_esquerdo": número (somente se vier imagem),
   "numeros_identificados": [10 números ou null],
-  "dupla_ativa": "A" | "B" | "C" | "D" | null,
+  "dupla_ativa": "A" | "B" | "C" | "D" | "E" | null,
   "dupla_descricao": "Ex: Dupla A — Terminal 3 (4x) + Setor Tier (5x)",
   "estrategias": {
+    "nsp": {"ativo": bool, "descricao": "alvos NSP dos últimos números convergem para...", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_ou_null},
     "terminal_simples": {"ativo": bool, "descricao": "...", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_ou_null},
     "setores": {"ativo": bool, "descricao": "...", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_ou_null},
     "repeticao": {"ativo": bool, "descricao": "...", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_ou_null},

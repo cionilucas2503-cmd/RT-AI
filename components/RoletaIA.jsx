@@ -1448,7 +1448,32 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   );
                 })()}
 
-                {/* 4. NÚMEROS DA JOGADA — faixa com central azul + 3 vizinhos amarelos */}
+                {/* 4. JOGADA DETALHADA — logo abaixo da JOGADA INDICADA */}
+                <details style={{ marginBottom: 14 }}>
+                  <summary style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 12, padding: "12px 16px", fontSize: 11, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
+                    <span>📊 JOGADA DETALHADA</span><span>›</span>
+                  </summary>
+                  <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: "0 0 12px 12px", padding: 16, borderTop: "none" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+                      {Object.entries(result.estrategias || {}).map(([key, val]) => {
+                        const labels = { terminal_simples: "Terminal", terminal_camuflado: "Camuflado", setores: "Setores", padroes: "Padrões", duzias: "Dúzias", paridade: "Paridade", numeros_puxam: "N.Puxam" };
+                        if (val.forca === "INATIVO") return null;
+                        return (
+                          <div key={key} style={{ background: "#161c28", borderRadius: 10, padding: "10px 12px", border: "1px solid #1a2030" }}>
+                            <div style={{ fontSize: 9, color: "#4a5568", letterSpacing: 1, fontFamily: "monospace", marginBottom: 4 }}>{labels[key] || key}</div>
+                            <div style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: forcaColor(val.forca) }}>{val.forca}</div>
+                            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 3, lineHeight: 1.4 }}>{val.descricao}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.8, borderLeft: "2px solid #c9a84c33", paddingLeft: 12 }}>
+                      {result.analise_completa}
+                    </div>
+                  </div>
+                </details>
+
+                {/* 5. NÚMEROS DA JOGADA — faixa com central azul + 3 vizinhos amarelos */}
                 {(() => {
                   if (!result.apostar_em || !gatilhoAtivo) return (
                     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
@@ -1516,30 +1541,6 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                 {/* 6. MESA VISUAL */}
                 <RouletteTable result={result} nspAlvoNum={nspAlvoNum} />
 
-                {/* 7. DETALHES */}
-                <details style={{ marginBottom: 14 }}>
-                  <summary style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 12, padding: "12px 16px", fontSize: 11, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
-                    <span>📊 VER ANÁLISE DETALHADA</span><span>›</span>
-                  </summary>
-                  <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: "0 0 12px 12px", padding: 16, borderTop: "none" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-                      {Object.entries(result.estrategias || {}).map(([key, val]) => {
-                        const labels = { terminal_simples: "Terminal", terminal_camuflado: "Camuflado", setores: "Setores", padroes: "Padrões", duzias: "Dúzias", paridade: "Paridade", numeros_puxam: "N.Puxam" };
-                        if (val.forca === "INATIVO") return null;
-                        return (
-                          <div key={key} style={{ background: "#161c28", borderRadius: 10, padding: "10px 12px", border: "1px solid #1a2030" }}>
-                            <div style={{ fontSize: 9, color: "#4a5568", letterSpacing: 1, fontFamily: "monospace", marginBottom: 4 }}>{labels[key] || key}</div>
-                            <div style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: forcaColor(val.forca) }}>{val.forca}</div>
-                            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 3, lineHeight: 1.4 }}>{val.descricao}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.8, borderLeft: "2px solid #c9a84c33", paddingLeft: 12 }}>
-                      {result.analise_completa}
-                    </div>
-                  </div>
-                </details>
 
               </div>
             )}

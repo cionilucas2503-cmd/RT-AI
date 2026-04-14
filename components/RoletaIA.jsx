@@ -304,25 +304,29 @@ Exemplo 2 — AGUARDAR:
    - Citar mais de 2 estratégias na justificativa do "gatilho"
 
 ## SE RECEBER UMA IMAGEM:
-LEITURA OBRIGATÓRIA: Os números no print do cassino são exibidos em grade, lidos da ESQUERDA para DIREITA, linha por linha de CIMA para BAIXO.
-O número do CANTO SUPERIOR ESQUERDO é o MAIS RECENTE (último que saiu).
-Os números seguintes (leitura normal) são os anteriores em ordem cronológica inversa.
 
-PROCEDIMENTO OBRIGATÓRIO — SIGA EXATAMENTE:
-1. O número do CANTO SUPERIOR ESQUERDO da grade = ÚLTIMO que a roleta sorteou (mais recente)
-2. Lendo da esquerda→direita, linha a linha de cima→baixo: cada número seguinte é progressivamente MAIS ANTIGO
-3. Extraia os primeiros 20 números nessa ordem = janela de análise
-4. No JSON: "numeros_identificados" = [mais recente, ..., mais antigo] (mesma ordem da leitura)
-5. O GATILHO para análise NSP = sempre o PRIMEIRO número do array (canto superior esquerdo = mais recente)
+⚠️ REGRA CRÍTICA DE LEITURA — NUNCA ERRE ISTO:
+O número no CANTO SUPERIOR ESQUERDO [linha1, coluna1] = MAIS RECENTE (saiu por último).
+O número no CANTO SUPERIOR DIREITO NÃO é o mais recente. É o 10º, não o 1º.
+Leia COMO UM LIVRO: esquerda→direita, cima→baixo. NUNCA da direita para esquerda.
 
-EXEMPLO DO PRINT (grade começa com):
-  Linha 1: 2  8  13  16  18  32  10  15  1
-  Linha 2: 21 30  35   7  24  32   4  34  29
-→ 2 = MAIS RECENTE (último sorteado pela roleta)
-→ 8 = penúltimo | 13 = antepenúltimo | 16, 18, 32, 10... = anteriores
-→ numeros_identificados = [2, 8, 13, 16, 18, 32, 10, 15, 1, 21, 30, 35, 7, 24, 32, 4, 34, 29, ...]
-→ Gatilho NSP = 2 | Histórico = os 19 seguintes
-→ NUNCA inverta a ordem, NUNCA comece pelo mais antigo
+EXEMPLO REAL COM 10 COLUNAS:
+       col1  col2  col3  col4  col5  col6  col7  col8  col9 col10
+linha1:  17    25     6    36    24    12    12    15     1    27
+linha2:  24    36    23    31    17    28    11    27    20    21
+
+LEITURA CORRETA: [17, 25, 6, 36, 24, 12, 12, 15, 1, 27, 24, 36, 23, 31, 17, 28, 11, 27, 20, 21]
+→ 17 = mais recente (col1, linha1) ✓
+→ 27 = 10º mais recente (col10, linha1) — NÃO É O MAIS RECENTE!
+
+LEITURA ERRADA (não faça): [27, 1, 15, 12, 12, 24, 36, ...] ← leitura da direita para esquerda
+
+PROCEDIMENTO:
+1. Localize o número no canto superior ESQUERDO = posição [linha1, col1] = mais recente
+2. Leia linha por linha, sempre da esquerda para a direita
+3. Extraia os primeiros 20 números = janela de análise
+4. numeros_identificados = [mais_recente, 2º, 3º, ..., 20º]
+5. NUNCA inverta, NUNCA comece pelo lado direito
 
 ## GESTÃO DE BANCA (Flat Bet):
 - Stop Gain do dia: +20% da banca
@@ -1014,30 +1018,22 @@ export default function RoletaIA() {
       userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
       userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT DE ROLETA:
 
-IDENTIFICAÇÃO DO FORMATO:
-Este print pode mostrar resultados de duas formas — identifique qual é:
-A) Grade com bolinhas coloridas (círculos): números em bolinhas vermelhas/pretas/verdes
-B) Grade com caixas retangulares em tabela (10 colunas): números em células, vermelhos ou brancos/pretos
+REGRA ÚNICA E INVIOLÁVEL DE LEITURA:
+→ O número na posição CANTO SUPERIOR ESQUERDO [linha 1, coluna 1] = MAIS RECENTE
+→ Leia EXATAMENTE como um livro ocidental: esquerda→direita, linha por linha, cima→baixo
+→ NÃO leia da direita para esquerda. NÃO comece pelo canto direito.
 
-REGRA DE LEITURA (igual para ambos):
-• Leia da ESQUERDA para DIREITA, linha por linha, de CIMA para BAIXO
-• O número no CANTO SUPERIOR ESQUERDO = MAIS RECENTE (último sorteado)
-• Cada número seguinte na leitura = mais antigo que o anterior
+EXEMPLO EXATO (10 colunas, formato tabela):
+       col1  col2  col3  col4  col5  col6  col7  col8  col9 col10
+linha1:  17    25     6    36    24    12    12    15     1    27
+linha2:  24    36    23    31    17    28    11    27    20    21
 
-EXEMPLO com 10 colunas por linha:
-Linha 1: 17  25   6  36  24  12  12  15   1  27
-Linha 2: 24  36  23  31  17  28  11  27  20  21
-→ MAIS RECENTE = 17 (posição [1,1])
-→ 2º = 25 | 3º = 6 | 4º = 36 | 5º = 24 | 6º = 12 | 7º = 12 | 8º = 15 | 9º = 1 | 10º = 27
-→ 11º = 24 | 12º = 36 | 13º = 23 ... e assim por diante
+→ [linha1,col1]=17 É O MAIS RECENTE
+→ [linha1,col10]=27 É O 10º MAIS RECENTE (não o 1º!)
+→ Correto: numeros_identificados = [17, 25, 6, 36, 24, 12, 12, 15, 1, 27, 24, 36, 23, 31, 17, 28, 11, 27, 20, 21]
+→ ERRADO seria: [27, 1, 15, 12, 12, 24, 36, ...] (leitura invertida — NÃO FAÇA ISSO)
 
-ATENÇÃO ESPECIAL:
-• Leia cada número com cuidado — diferencie 6 de 8, 1 de 7, 3 de 8, etc.
-• Não inverta a ordem — NUNCA comece do canto inferior direito
-• Números vermelhos e brancos/pretos são todos válidos (são apenas as cores da roleta)
-• O zero (0) é verde — inclua se aparecer
-
-Extraia os PRIMEIROS 20 números desta leitura e retorne em numeros_identificados: [mais_recente, 2º, 3º, ..., 20º]
+Extraia os PRIMEIROS 20 números desta leitura e retorne em numeros_identificados: [mais_recente, 2º, ..., 20º]
 
 Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
     } else {

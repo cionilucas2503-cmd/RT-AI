@@ -632,45 +632,48 @@ function RouletteTable({ result }) {
     return null;
   };
 
-  // SVG dimensions
-  const VW = 260, VH = 670;
-  const CX = 130, R = 107;
-  const TOP_Y = 118, BOT_Y = 548;
-  const LX = 25, RX = 235;
+  // SVG dimensions — matched to reference design
+  const VW = 260, VH = 700;
+  const CX = 130, R = 104;
+  const TOP_Y = 122, BOT_Y = 558;  // BOT_Y - TOP_Y = 436px straight section
+  const LX = 26, RX = 234;
   const CW = 36; // cell width uniform
 
-  // Wheel sections — matches European roulette wheel order
-  const topArcNums    = [0, 32, 15, 19];
-  const rightNums     = [4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8];
-  const bottomArcNums = [23, 10, 5, 24, 16];
-  const leftNums      = [33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+  // Correct European roulette wheel split (matches reference image exactly):
+  // WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26]
+  const topArcNums    = [3, 26, 0, 32, 15];   // WHEEL[35,36,0,1,2]  — top arc, L→R
+  const rightNums     = [19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11]; // WHEEL[3..14] — 12 cells
+  const bottomArcNums = [30, 8, 23, 10, 5];   // WHEEL[15..19] — bottom arc, R→L
+  const leftNums      = [35, 12, 28, 7, 29, 18, 22, 9, 31, 14, 20, 1, 33, 16, 24]; // WHEEL[34..20] — 15 cells
 
-  // Cell heights — right has fewer cells so taller, left more cells so shorter
-  const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // ~32.7px — cells touch
-  const CH_L = (BOT_Y - TOP_Y) / leftNums.length;   // ~28.3px — cells touch
-  const CH_ARC = 28; // arc cells
+  const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // 436/12 = 36.3px
+  const CH_L = (BOT_Y - TOP_Y) / leftNums.length;   // 436/15 = 29.1px
+  const CH_ARC = CH_R; // arc cells same height as right column for compact look
 
-  // Build all cells with positions
+  // Arc angles: 5 cells evenly at 150°,120°,90°,60°,30° (standard math: 0°=right, CCW+)
+  const ARC_ANGLES = [150, 120, 90, 60, 30];
+
+  // Build cells — ALL cells are upright (rot=0), matching reference design
   const cells = [];
-  // Top arc (spread across top semicircle)
-  const topStep = 180 / (topArcNums.length + 1);
+
+  // Top arc: [3,26,0,32,15] left→right across top semicircle
   topArcNums.forEach((n, i) => {
-    const deg = 180 - topStep * (i + 1);
-    const rad = deg * Math.PI / 180;
-    cells.push({ n, x: CX + R * Math.cos(rad), y: TOP_Y - R * Math.sin(rad), rot: 90 - deg, ch: CH_ARC, rx: 8 });
+    const rad = ARC_ANGLES[i] * Math.PI / 180;
+    cells.push({ n, x: CX + R * Math.cos(rad), y: TOP_Y - R * Math.sin(rad), rot: 0, ch: CH_ARC, rx: 6 });
   });
-  // Right column (top to bottom)
+
+  // Right column (top to bottom): 12 cells
   rightNums.forEach((n, i) => {
     cells.push({ n, x: RX, y: TOP_Y + CH_R * (i + 0.5), rot: 0, ch: CH_R, rx: 4 });
   });
-  // Bottom arc (right to left, through bottom)
-  const botStep = 180 / (bottomArcNums.length + 1);
+
+  // Bottom arc: [30,8,23,10,5] right→left across bottom semicircle
   bottomArcNums.forEach((n, i) => {
-    const deg_cw = botStep * (i + 1);
-    const rad = deg_cw * Math.PI / 180;
-    cells.push({ n, x: CX + R * Math.cos(rad), y: BOT_Y + R * Math.sin(rad), rot: 90 + deg_cw, ch: CH_ARC, rx: 8 });
+    const rad = ARC_ANGLES[i] * Math.PI / 180;
+    cells.push({ n, x: CX + R * Math.cos(rad), y: BOT_Y + R * Math.sin(rad), rot: 0, ch: CH_ARC, rx: 6 });
   });
-  // Left column (top to bottom)
+
+  // Left column (top to bottom): 15 cells
   leftNums.forEach((n, i) => {
     cells.push({ n, x: LX, y: TOP_Y + CH_L * (i + 0.5), rot: 0, ch: CH_L, rx: 4 });
   });
@@ -695,17 +698,17 @@ function RouletteTable({ result }) {
           {/* Pill background */}
           <path d={pillPath} fill="#080b0f" stroke="#1a1a1a" strokeWidth="1"/>
 
-          {/* Sector dividers */}
-          {[245, 350, 450].map(y => (
-            <line key={y} x1={CX-R+12} y1={y} x2={CX+R-12} y2={y} stroke="#111" strokeWidth="1"/>
+          {/* Sector dividers — aligned with right column cell boundaries */}
+          {[304, 413].map(y => (
+            <line key={y} x1={CX-R+10} y1={y} x2={CX+R-10} y2={y} stroke="#111" strokeWidth="1"/>
           ))}
 
           {/* Sector labels */}
           {[
-            { label: "Zero",      y: 182 },
-            { label: "Voisins",   y: 297 },
-            { label: "Orphelins", y: 400 },
-            { label: "Tier",      y: 490 },
+            { label: "Zero",      y: 190 },
+            { label: "Voisins",   y: 358 },
+            { label: "Orphelins", y: 450 },
+            { label: "Tier",      y: 510 },
           ].map(s => (
             <text key={s.label} x={CX} y={s.y} textAnchor="middle" dominantBaseline="middle"
               fontSize="15" fill="#252535" fontStyle="italic" style={{ fontFamily: "serif" }}>

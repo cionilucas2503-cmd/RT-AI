@@ -244,15 +244,19 @@ LEITURA OBRIGATÓRIA: Os números no print do cassino são exibidos em grade, li
 O número do CANTO SUPERIOR ESQUERDO é o MAIS RECENTE (último que saiu).
 Os números seguintes (leitura normal) são os anteriores em ordem cronológica inversa.
 
-PROCEDIMENTO:
-1. Leia todos os números visíveis
-2. O 1º número (canto superior esquerdo) = mais recente = GATILHO atual
-3. Use esse número + os 19 seguintes = 20 números de análise
-4. Ordene em "numeros_identificados" do MAIS RECENTE para o MAIS ANTIGO
-5. Aplique TODA a análise com esses 20 números
+PROCEDIMENTO OBRIGATÓRIO:
+1. Leia os números da grade do cassino: esquerda→direita, cima→baixo
+2. O número do CANTO SUPERIOR ESQUERDO = o MAIS RECENTE (último sorteado)
+3. Os seguintes em ordem de leitura = progressivamente mais antigos
+4. Extraia os 20 primeiros números lidos = janela de análise
+5. Em "numeros_identificados" coloque do MAIS RECENTE para o MAIS ANTIGO
+6. Aplique TODA a análise com esses 20 números
 
-EXEMPLO: Se o print mostra [35, 7, 24, 32, 4, 34, 29, 14, 16, 1, 14, 20, 16, 27, 22, 31, 2, 6, 25, 35...]
-→ 35 é o mais recente, análise usa: 35, 7, 24, 32, 4, 34, 29, 14, 16, 1, 14, 20, 16, 27, 22, 31, 2, 6, 25, 35
+EXEMPLO CONCRETO: Print mostra grade começando com [2, 8, 13, 16, 18, 32, 10, 15, 1, 21, 30, 35, 7, 24, 32, 4, 34, 29, ...]
+→ 2 = MAIS RECENTE (foi o último a sair)
+→ 8 = penúltimo, 13 = antepenúltimo, e assim por diante
+→ numeros_identificados = [2, 8, 13, 16, 18, 32, 10, 15, 1, 21, 30, 35, 7, 24, 32, 4, 34, 29, ...]
+→ O gatilho atual para NSP = 2 (o mais recente)
 
 ## GESTÃO DE BANCA (Flat Bet):
 - Stop Gain do dia: +20% da banca
@@ -974,7 +978,8 @@ export default function RoletaIA() {
         setPrevBetNums([]);
       }
       if (parsed.numeros_identificados?.length > 0) {
-        setNumbers(parsed.numeros_identificados);
+        // numeros_identificados: AI returns [newest→oldest], store as [oldest→newest] so slice(-7) = last 7
+        setNumbers([...parsed.numeros_identificados].reverse());
       }
       // After first analysis, clear imageBase64 so updates use full text history
       setImageBase64(null);
@@ -1104,31 +1109,44 @@ export default function RoletaIA() {
                   }}>{k}</button>
                 ))}
               </div>
-              <div style={{ margin: "12px 0 6px", borderTop: "1px solid #1a2030", paddingTop: 12, display: "flex", flexWrap: "wrap", gap: 6, minHeight: 40 }}>
+              {/* Últimos 7 números — janela deslizante */}
+              <div style={{ margin: "12px 0 6px", borderTop: "1px solid #1a2030", paddingTop: 12 }}>
+                <div style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, marginBottom: 8 }}>
+                  ÚLTIMOS 7 NÚMEROS {numbers.length > 0 ? `(total acumulado: ${numbers.length})` : ""}
+                </div>
                 {numbers.length === 0
-                  ? <span style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace", padding: "8px 0" }}>Nenhum número ainda — adicione pelo menos 5</span>
-                  : numbers.slice().reverse().map((n, i) => {
-                    const c = getNumColor(n);
-                    const isLatest = i === 0;
-                    return (
-                      <div key={i} onClick={() => setNumbers(prev => { const a = [...prev]; a.splice(numbers.length-1-i,1); return a; })}
-                        style={{
-                          width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                          background: c === "red" ? "#b71c1c" : c === "green" ? "#1b5e20" : "#1a1a1a",
-                          border: isLatest ? "2px solid #c9a84c" : c === "black" ? "1px solid #333" : "none",
-                          fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: "#fff",
-                          cursor: "pointer", boxShadow: isLatest ? "0 0 8px rgba(201,168,76,0.4)" : "none"
-                        }}>
-                        {n}
-                      </div>
-                    );
-                  })}
+                  ? <span style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace" }}>Envie um print ou adicione números manualmente</span>
+                  : (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto" }}>
+                      {numbers.slice(-7).reverse().map((n, i) => {
+                        const c = getNumColor(n);
+                        const isLatest = i === 0;
+                        const realIdx = numbers.length - 1 - i;
+                        return (
+                          <div key={i}
+                            onClick={() => setNumbers(prev => { const a = [...prev]; a.splice(realIdx, 1); return a; })}
+                            style={{
+                              width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              background: c === "red" ? "#b71c1c" : c === "green" ? "#1b5e20" : "#1a1a1a",
+                              border: isLatest ? "2px solid #c9a84c" : c === "black" ? "1px solid #444" : "1px solid transparent",
+                              fontSize: 13, fontFamily: "monospace", fontWeight: 700, color: "#fff",
+                              cursor: "pointer",
+                              boxShadow: isLatest ? "0 0 10px rgba(201,168,76,0.5)" : "none",
+                              opacity: 1 - i * 0.1,
+                            }}>
+                            {n}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                }
               </div>
 
               {numbers.length > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, color: "#4a5568", fontFamily: "monospace" }}>{numbers.length} número{numbers.length !== 1 ? "s" : ""}</span>
-                  <button onClick={() => { setNumbers([]); setResult(null); }} style={{
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                  <button onClick={() => { setNumbers([]); setResult(null); setPrevBetNums([]); }} style={{
                     background: "transparent", border: "1px solid #1a2030", borderRadius: 8,
                     color: "#4a5568", fontSize: 11, fontFamily: "monospace", padding: "6px 12px", cursor: "pointer"
                   }}>Limpar</button>

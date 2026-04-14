@@ -694,8 +694,12 @@ function RouletteTable({ result, nspAlvoNum }) {
   const isAguardar = status === "AGUARDAR";
   const isBoa = status === "BOA";
 
-  // Chip numbers ONLY when status is BOA (verde) — amarelo/vermelho = sem destaque
-  const mainChipNums = isBoa ? parseChipNumbers(result.apostar_em) : [];
+  // Chip numbers ONLY when status is BOA — compute ±3 from WHEEL (not from apostar_em text)
+  // This ensures correct roulette positions regardless of how AI writes the apostar_em string
+  const mainCenterNums = isBoa && result.apostar_em
+    ? (result.apostar_em.match(/\[(\d+)\]/g) || []).map(m => parseInt(m.replace(/[\[\]]/g, "")))
+    : [];
+  const mainChipNums = mainCenterNums.flatMap(n => getWheelBet(n, 3).all);
   const nspChipNums = (isBoa && nspAlvoNum !== null && nspAlvoNum !== undefined)
     ? getWheelBet(nspAlvoNum, 3).all : [];
   const chipNums = [...new Set([...mainChipNums, ...nspChipNums])];

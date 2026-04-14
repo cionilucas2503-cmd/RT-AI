@@ -5,6 +5,8 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not set" });
 
   try {
+    const { system, messages, max_tokens } = req.body;
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -13,13 +15,21 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        ...req.body,
-        model: "claude-opus-4-5-20251101",
-        max_tokens: 1000
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: max_tokens || 1500,
+        system,
+        messages
       })
     });
 
-    const data = await response.json();
+    const text = await response.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch(e) {
+      return res.status(500).json({ error: "Invalid JSON from API", raw: text.slice(0, 500) });
+    }
 
     if (!response.ok) {
       return res.status(response.status).json({ error: data.error?.message || "API error", data });

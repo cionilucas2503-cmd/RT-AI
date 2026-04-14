@@ -34,6 +34,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model,
           max_tokens: max_tokens || 2000,
+          temperature: 0,        // DETERMINÍSTICO — mesma entrada = mesma saída sempre
           system: system || "",
           messages: messages || []
         })
@@ -43,19 +44,14 @@ export default async function handler(req, res) {
       let parsed;
       try { parsed = JSON.parse(text); } catch(e) { continue; }
 
-      if (response.ok) {
-        return res.status(200).json({ ...parsed, _model_used: model });
-      }
+      if (response.ok) return res.status(200).json({ ...parsed, _model_used: model });
 
       if (parsed.error?.type === "not_found_error" || parsed.error?.message?.includes("model")) {
         lastError = parsed.error?.message;
         continue;
       }
 
-      return res.status(response.status).json({
-        error: parsed.error?.message || "API error",
-        type: parsed.error?.type
-      });
+      return res.status(response.status).json({ error: parsed.error?.message || "API error" });
     }
 
     res.status(500).json({ error: "Nenhum modelo disponível: " + lastError });

@@ -172,16 +172,15 @@ AO ANALISAR:
 4. Se múltiplas estratégias apontam para o mesmo número/grupo = GATILHO DE ENTRADA
 
 
-### COMO INDICAR APOSTAS (OBRIGATÓRIO em toda análise):
-Sempre que indicar um número alvo, apresente a aposta com vizinhos na roda:
+### COMO INDICAR APOSTAS (OBRIGATÓRIO):
+SEMPRE use o mapa de vizinhos abaixo. NUNCA invente posições.
 
-PADRÃO +3 (usar quando confiança < 80%):
-Ex: Número 33 → apostar em: 5 - 24 - 16 - [33] - 1 - 20 - 14
-(3 vizinhos à esquerda + número central + 3 vizinhos à direita = 7 números)
+PADRÃO +3 (confiança < 80%): 3 vizinhos esq + [CENTRO] + 3 vizinhos dir = 7 números
+PADRÃO +2 (confiança ≥ 80%): 2 vizinhos esq + [CENTRO] + 2 vizinhos dir = 5 números
 
-PADRÃO +2 (usar quando confiança ≥ 80% — alta convicção):
-Ex: Número 33 → apostar em: 24 - 16 - [33] - 1 - 20
-(2 vizinhos à esquerda + número central + 2 vizinhos à direita = 5 números)
+FORMATO OBRIGATÓRIO: "A - B - C - [CENTRO] - D - E - F"
+O número central SEMPRE entre colchetes. SEMPRE 7 números para +3 ou 5 para +2.
+Se houver 2 apostas, separe por linha nova.
 
 MAPA DE VIZINHOS ±3 NA RODA (esq-esq-esq | CENTRO | dir-dir-dir):
 0: 35-3-26|0|32-15-19    1: 24-16-33|1|20-14-31    2: 19-4-21|2|25-17-34
@@ -208,11 +207,24 @@ LÓGICA DE ENTRADA CORRETA:
 3. Seleciona o candidato mais confirmado pelas outras estratégias
 4. Apresenta a aposta com vizinhos (+2 ou +3)
 
-## REGRAS DE DECISÃO:
-- **MESA BOA**: 2+ estratégias convergindo para o mesmo padrão com força MÉDIA ou FORTE
-- **AGUARDAR**: 1 estratégia com sinal fraco, ou sinais contraditórios
-- **EVITAR**: Padrões caóticos, sem lógica identificável, mesa "louca"
-- **CONFIANÇA**: Calcule de 0-100% baseado na quantidade e força dos sinais convergentes
+## REGRAS DE DECISÃO — SEGUIR RIGOROSAMENTE:
+
+### CÁLCULO DE CONFIANÇA (use sempre a mesma metodologia):
+- 1 estratégia FORTE: 45%
+- 2 estratégias FORTE: 65%
+- 3 estratégias FORTE: 75%
+- 4+ estratégias FORTE: 85%
+- Adicione 5% por cada estratégia MÉDIO extra
+- Subtraia 10% se houver estratégias contraditórias
+
+### CLASSIFICAÇÃO (baseada APENAS na confiança calculada):
+- **MESA BOA**: confiança ≥ 65% (2+ estratégias convergentes)
+- **AGUARDAR**: confiança entre 45% e 64%
+- **EVITAR**: confiança < 45% ou sinais fortemente contraditórios
+
+### REGRA DE CONSISTÊNCIA:
+Para o mesmo histórico de números, a análise DEVE ser sempre idêntica.
+Aplique as regras matematicamente, sem variação.
 
 ## GATILHO DE ENTRADA:
 Só indique gatilho quando confiança ≥ 60%. O gatilho deve ser específico:
@@ -586,8 +598,10 @@ const RED_NUM = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 
 function parseChipNumbers(apostarEm) {
   if (!apostarEm) return [];
-  const matches = apostarEm.match(/\b([0-9]|[12][0-9]|3[0-6])\b/g);
-  return matches ? [...new Set(matches.map(Number))] : [];
+  // Extract ALL numbers 0-36 from the string (including inside brackets)
+  const clean = apostarEm.replace(/[\[\]]/g, " ");
+  const matches = clean.match(/\b(3[0-6]|[12][0-9]|[0-9])\b/g);
+  return matches ? [...new Set(matches.map(Number))].filter(n => n >= 0 && n <= 36) : [];
 }
 
 function RouletteTable({ result }) {
@@ -620,10 +634,10 @@ function RouletteTable({ result }) {
 
   // SVG dimensions
   const VW = 260, VH = 670;
-  const CX = 130, R = 105;
-  const TOP_Y = 120, BOT_Y = 545;
-  const LX = 28, RX = 232;
-  const CW = 40; // cell width uniform
+  const CX = 130, R = 107;
+  const TOP_Y = 118, BOT_Y = 548;
+  const LX = 25, RX = 235;
+  const CW = 36; // cell width uniform
 
   // Cell heights — right has fewer cells so taller, left more cells so shorter
   const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // ~32.7px — cells touch

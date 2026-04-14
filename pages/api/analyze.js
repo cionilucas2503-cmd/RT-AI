@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const { system, messages, max_tokens } = req.body;
 
     const payload = {
-      model: "claude-3-5-haiku-20241022",
+      model: "claude-3-haiku-20240307",
       max_tokens: max_tokens || 1500,
       system: system || "",
       messages: messages || []
@@ -25,23 +25,17 @@ export default async function handler(req, res) {
     });
 
     const text = await response.text();
-
     let data;
     try {
       data = JSON.parse(text);
     } catch(e) {
-      return res.status(500).json({ 
-        error: "Invalid JSON from Anthropic API", 
-        raw: text.slice(0, 300),
-        status: response.status
-      });
+      return res.status(500).json({ error: "Invalid JSON", raw: text.slice(0, 300) });
     }
 
     if (!response.ok) {
       return res.status(response.status).json({ 
         error: data.error?.message || "API error",
-        type: data.error?.type,
-        full: data
+        type: data.error?.type
       });
     }
 

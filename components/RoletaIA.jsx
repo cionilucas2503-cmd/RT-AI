@@ -1160,18 +1160,15 @@ Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números a
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
   const statusBg = result ? (result.status_mesa === "BOA" ? "rgba(0,230,118,0.1)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.1)" : "rgba(255,215,64,0.1)") : null;
-  // gatilhoAtivo: TRIPLA VERIFICAÇÃO — 85%+, 2 FORTE, NSP FORTE
-  // Se qualquer condição falhar → sem indicação de aposta
+  // gatilhoAtivo: confia na análise de 3 fases da IA
+  // Condições: status BOA (verde) + confiança ≥ 85% + pelo menos 2 estratégias FORTE
+  // A validação NSP é feita internamente pela IA — não bloqueamos aqui
   const gatilhoAtivo = (() => {
     if (!result || result.status_mesa !== "BOA") return false;
     if ((result.confianca || 0) < 85) return false;
     const estrategias = result.estrategias || {};
     const forteCount = Object.values(estrategias).filter(e => e.forca === "FORTE").length;
-    if (forteCount < 2) return false;
-    // NSP deve ser pelo menos MÉDIO para confirmar
-    const nspForca = estrategias.numeros_puxam?.forca;
-    if (!nspForca || nspForca === "INATIVO" || nspForca === "FRACO") return false;
-    return true;
+    return forteCount >= 2;
   })();
   const aguardarFrase = (
     <div style={{ fontSize: 14, color: "#ffd740", fontFamily: "monospace", fontWeight: 600, textAlign: "center", padding: "10px 0", letterSpacing: 1 }}>

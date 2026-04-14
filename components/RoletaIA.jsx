@@ -632,51 +632,46 @@ function RouletteTable({ result }) {
     return null;
   };
 
-  // SVG dimensions — matched to reference design
-  const VW = 260, VH = 700;
-  const CX = 130, R = 104;
-  const TOP_Y = 122, BOT_Y = 558;  // BOT_Y - TOP_Y = 436px straight section
-  const LX = 26, RX = 234;
-  const CW = 36; // cell width uniform
+  // SVG dimensions — compact, numbers touching in arc (R=70 → arc spacing ≈ CW)
+  const VW = 260, VH = 660;
+  const CX = 130, R = 70;
+  const TOP_Y = 116, BOT_Y = 560;  // straight section = 444px
+  const LX = 60, RX = 200;
+  const CW = 36;
 
-  // Correct European roulette wheel split (matches reference image exactly):
-  // WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26]
-  const topArcNums    = [3, 26, 0, 32, 15];   // WHEEL[35,36,0,1,2]  — top arc, L→R
-  const rightNums     = [19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11]; // WHEEL[3..14] — 12 cells
-  const bottomArcNums = [30, 8, 23, 10, 5];   // WHEEL[15..19] — bottom arc, R→L
-  const leftNums      = [35, 12, 28, 7, 29, 18, 22, 9, 31, 14, 20, 1, 33, 16, 24]; // WHEEL[34..20] — 15 cells
+  // European roulette wheel split (matches reference image):
+  const topArcNums    = [3, 26, 0, 32, 15];
+  const rightNums     = [19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11]; // 12 cells
+  const bottomArcNums = [30, 8, 23, 10, 5];
+  const leftNums      = [35, 12, 28, 7, 29, 18, 22, 9, 31, 14, 20, 1, 33, 16, 24]; // 15 cells
 
-  const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // 436/12 = 36.3px
-  const CH_L = (BOT_Y - TOP_Y) / leftNums.length;   // 436/15 = 29.1px
-  const CH_ARC = CH_R; // arc cells same height as right column for compact look
+  const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // 444/12 = 37px
+  const CH_L = (BOT_Y - TOP_Y) / leftNums.length;   // 444/15 = 29.6px
+  const CH_ARC = CH_R;
 
-  // Arc angles: 5 cells evenly at 150°,120°,90°,60°,30° (standard math: 0°=right, CCW+)
+  // Arc angles: R=70 + 30° spacing → arc distance ≈ CW (cells touching)
   const ARC_ANGLES = [150, 120, 90, 60, 30];
 
-  // Build cells — ALL cells are upright (rot=0), matching reference design
+  // All cells upright (rot=0)
   const cells = [];
-
-  // Top arc: [3,26,0,32,15] left→right across top semicircle
   topArcNums.forEach((n, i) => {
     const rad = ARC_ANGLES[i] * Math.PI / 180;
     cells.push({ n, x: CX + R * Math.cos(rad), y: TOP_Y - R * Math.sin(rad), rot: 0, ch: CH_ARC, rx: 6 });
   });
-
-  // Right column (top to bottom): 12 cells
   rightNums.forEach((n, i) => {
     cells.push({ n, x: RX, y: TOP_Y + CH_R * (i + 0.5), rot: 0, ch: CH_R, rx: 4 });
   });
-
-  // Bottom arc: [30,8,23,10,5] right→left across bottom semicircle
   bottomArcNums.forEach((n, i) => {
     const rad = ARC_ANGLES[i] * Math.PI / 180;
     cells.push({ n, x: CX + R * Math.cos(rad), y: BOT_Y + R * Math.sin(rad), rot: 0, ch: CH_ARC, rx: 6 });
   });
-
-  // Left column (top to bottom): 15 cells
   leftNums.forEach((n, i) => {
     cells.push({ n, x: LX, y: TOP_Y + CH_L * (i + 0.5), rot: 0, ch: CH_L, rx: 4 });
   });
+
+  // Divider line endpoints (exact cell boundaries)
+  const xr = RX - CW / 2;  // inner edge of right column
+  const xl = LX + CW / 2;  // inner edge of left column
 
   const pillPath = `M ${CX-R} ${TOP_Y} A ${R} ${R} 0 0 1 ${CX+R} ${TOP_Y} L ${CX+R} ${BOT_Y} A ${R} ${R} 0 0 1 ${CX-R} ${BOT_Y} Z`;
 
@@ -693,25 +688,28 @@ function RouletteTable({ result }) {
       )}
 
       <div style={{ display: "flex", justifyContent: "center", filter: isEvitar ? "grayscale(0.8) brightness(0.45)" : "none" }}>
-        <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" style={{ maxWidth: 280 }}>
+        <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" style={{ maxWidth: 220 }}>
 
           {/* Pill background */}
           <path d={pillPath} fill="#080b0f" stroke="#1a1a1a" strokeWidth="1"/>
 
-          {/* Sector dividers — aligned with right column cell boundaries */}
-          {[304, 413].map(y => (
-            <line key={y} x1={CX-R+10} y1={y} x2={CX+R-10} y2={y} stroke="#111" strokeWidth="1"/>
-          ))}
+          {/* Sector dividers — exact cell boundaries, diagonal where sectors misalign */}
+          {/* Line 1: Zero / Voisins — between arc and first column cells (3↔35, 15↔19) */}
+          <line x1={xr} y1={TOP_Y} x2={xl} y2={TOP_Y} stroke="#333" strokeWidth="0.8"/>
+          {/* Line 2: Voisins / Orphelins — right: 25↔17 (row5), left: 22↔9 (row7) */}
+          <line x1={xr} y1={TOP_Y + CH_R * 5} x2={xl} y2={TOP_Y + CH_L * 7} stroke="#333" strokeWidth="0.8"/>
+          {/* Line 3: Orphelins / Tier — right: 6↔27 (row8), left: 1↔33 (row12) — diagonal */}
+          <line x1={xr} y1={TOP_Y + CH_R * 8} x2={xl} y2={TOP_Y + CH_L * 12} stroke="#333" strokeWidth="0.8"/>
 
-          {/* Sector labels */}
+          {/* Sector labels — centered in each zone interior */}
           {[
-            { label: "Zero",      y: 190 },
-            { label: "Voisins",   y: 358 },
-            { label: "Orphelins", y: 450 },
-            { label: "Tier",      y: 510 },
+            { label: "Zero",      y: TOP_Y - R / 2 },
+            { label: "Voisins",   y: TOP_Y + CH_R * 2.5 },
+            { label: "Orphelins", y: TOP_Y + CH_R * 6.5 },
+            { label: "Tier",      y: TOP_Y + CH_R * 10 },
           ].map(s => (
             <text key={s.label} x={CX} y={s.y} textAnchor="middle" dominantBaseline="middle"
-              fontSize="15" fill="#252535" fontStyle="italic" style={{ fontFamily: "serif" }}>
+              fontSize="13" fill="#252535" fontStyle="italic" style={{ fontFamily: "serif" }}>
               {s.label}
             </text>
           ))}

@@ -830,7 +830,7 @@ ${contextNote}` });
         body: JSON.stringify({
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userContent }],
-          max_tokens: 1500
+          max_tokens: 4000
         })
       });
       const data = await res.json();

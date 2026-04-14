@@ -851,7 +851,7 @@ export default function RoletaIA() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-opus-4-5-20251101",
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userContent }]
@@ -866,7 +866,7 @@ export default function RoletaIA() {
         setNumbers(parsed.numeros_identificados);
       }
     } catch (err) {
-      setError("Erro ao analisar. Tente novamente.");
+      setError("Erro: " + (err.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
     }

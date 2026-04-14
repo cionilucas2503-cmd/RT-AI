@@ -839,12 +839,11 @@ export default function RoletaIA() {
 Leia SOMENTE os 10 números da PRIMEIRA LINHA da grade (esquerda → direita).
 O número mais à ESQUERDA = mais recente. O mais à DIREITA = 10º.
 
-Exemplo: Linha 1 = 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
-→ canto_superior_esquerdo = 25
-→ numeros_identificados = [25, 11, 27, 28, 24, 16, 23, 31, 12, 26]
-
-RETORNE EXATAMENTE 10 NÚMEROS — apenas da primeira linha, nada mais.
-VERIFICAÇÃO: numeros_identificados[0] == canto_superior_esquerdo?
+REGRAS:
+- Leia os números diretamente da imagem — NUNCA use números de memória ou exemplos anteriores
+- numeros_identificados[0] deve ser o número que você vê no canto superior ESQUERDO da imagem
+- VERIFICAÇÃO: confirme visualmente que numeros_identificados[0] bate com o canto esquerdo antes de retornar
+- Se não conseguir ler algum número com certeza, releia com atenção — não substitua por suposição
 
 Faça a análise completa com esses 10 números.${contextNote}` });
     } else {

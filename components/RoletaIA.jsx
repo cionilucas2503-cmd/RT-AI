@@ -623,46 +623,12 @@ function RouletteTable({ result }) {
   const CX = 130, R = 105;
   const TOP_Y = 120, BOT_Y = 545;
   const LX = 28, RX = 232;
-  const CW = 44, CH = 26;
+  const CW = 40; // cell width uniform
 
-  // Right column: 13 cells (15→11)
-  const rightNums = [15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11];
-  // Left column: 15 cells (35→24), top to bottom
-  const leftNums  = [35, 12, 28, 7, 29, 18, 22, 9, 31, 14, 20, 1, 33, 16, 24];
-
-  const sideH = BOT_Y - TOP_Y;
-  const rStep = sideH / rightNums.length;
-  const lStep = sideH / leftNums.length;
-
-  // All positions: {n, x, y, rot}
-  const cells = [];
-
-  // Right column
-  rightNums.forEach((n, i) => cells.push({ n, x: RX, y: TOP_Y + i * rStep + rStep / 2, rot: 0 }));
-
-  // Left column
-  leftNums.forEach((n, i) => cells.push({ n, x: LX, y: TOP_Y + i * lStep + lStep / 2, rot: 0 }));
-
-  // Top arc: 3, 26, 0, 32 (angles from top, + = clockwise)
-  const toRad = d => d * Math.PI / 180;
-  [{ n: 3, a: -65 }, { n: 26, a: -30 }, { n: 0, a: 0 }, { n: 32, a: 30 }].forEach(({ n, a }) => {
-    cells.push({
-      n,
-      x: CX + R * Math.sin(toRad(a)),
-      y: TOP_Y - R * Math.cos(toRad(a)),
-      rot: a
-    });
-  });
-
-  // Bottom arc: 30, 8, 23, 10, 5 (angles from right, + = down)
-  [{ n: 30, a: 20 }, { n: 8, a: 45 }, { n: 23, a: 90 }, { n: 10, a: 135 }, { n: 5, a: 160 }].forEach(({ n, a }) => {
-    cells.push({
-      n,
-      x: CX + R * Math.cos(toRad(a)),
-      y: BOT_Y + R * Math.sin(toRad(a)),
-      rot: a - 90
-    });
-  });
+  // Cell heights — right has fewer cells so taller, left more cells so shorter
+  const CH_R = (BOT_Y - TOP_Y) / rightNums.length;  // ~32.7px — cells touch
+  const CH_L = (BOT_Y - TOP_Y) / leftNums.length;   // ~28.3px — cells touch
+  const CH_ARC = 28; // arc cells
 
   const pillPath = `M ${CX-R} ${TOP_Y} A ${R} ${R} 0 0 1 ${CX+R} ${TOP_Y} L ${CX+R} ${BOT_Y} A ${R} ${R} 0 0 1 ${CX-R} ${BOT_Y} Z`;
 
@@ -703,12 +669,14 @@ function RouletteTable({ result }) {
           ))}
 
           {/* Number cells */}
-          {cells.map(({ n, x, y, rot }) => {
+          {cells.map(({ n, x, y, rot, ch, rx: cellRx }) => {
             const chip = getChip(n);
             const ctr = isCenter(n);
+            const cellH = ch || 28;
+            const rxVal = cellRx || 4;
             return (
               <g key={n} transform={`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${rot})`}>
-                <rect x={-CW/2} y={-CH/2} width={CW} height={CH} rx={4} ry={4}
+                <rect x={-CW/2} y={-cellH/2} width={CW} height={cellH} rx={rxVal} ry={rxVal}
                   fill={getBg(n)}
                   stroke={chip ? chip : "#222"}
                   strokeWidth={chip ? (ctr ? 2 : 1.5) : 0.5}
@@ -720,7 +688,7 @@ function RouletteTable({ result }) {
                   {n}
                 </text>
                 {chip && (
-                  <circle cx={CW/2 - 4} cy={-(CH/2) + 4} r={ctr ? 5 : 4}
+                  <circle cx={CW/2 - 4} cy={-(cellH/2) + 4} r={ctr ? 5 : 4}
                     fill={chip} stroke="#000" strokeWidth="0.5"
                   />
                 )}

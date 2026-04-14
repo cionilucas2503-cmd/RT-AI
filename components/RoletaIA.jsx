@@ -1031,7 +1031,21 @@ export default function RoletaIA() {
     if (isUpdate) {
       const lastNum = nums[nums.length - 1];
       const prevNums = nums.slice(0, -1);
-      userContent.push({ type: "text", text: `ATUALIZAÇÃO DE ANÁLISE.\n\nHistórico completo anterior (${prevNums.length} números, mais antigo primeiro): ${prevNums.join(", ")}.\n\nNOVO número que acabou de cair: ${lastNum}.\n\nHistórico completo agora (${nums.length} números): ${nums.join(", ")}.\n\nAtualize a análise levando em conta TODO o histórico acima incluindo o novo número ${lastNum}. A análise anterior indicou: status=${result?.status_mesa}, confiança=${result?.confianca}%. ${contextNote}` });
+      userContent.push({ type: "text", text: `ATUALIZAÇÃO DE ANÁLISE — NOVO NÚMERO: ${lastNum}
+
+Histórico anterior (${prevNums.length} números, mais antigo primeiro): ${prevNums.join(", ")}
+Novo número que acabou de cair: ${lastNum}
+Histórico completo agora (${nums.length} números, mais antigo→mais recente): ${nums.join(", ")}
+Análise anterior: status=${result?.status_mesa}, confiança=${result?.confianca}%
+
+VERIFICAÇÃO OBRIGATÓRIA ANTES DE QUALQUER INDICAÇÃO:
+1. As 2 estratégias mais fortes da análise anterior ainda são válidas com o novo histórico?
+2. O número ${lastNum} é genuinamente um GATILHO para essas estratégias identificadas? Verifique na tabela NSP se ${lastNum} tem alvos primários que convergem com as estratégias.
+3. Se ${lastNum} NÃO ativar as estratégias previamente identificadas como mais fortes → status = AGUARDAR, apostar_em = null
+4. Só mude para BOA se ${lastNum} for um gatilho REAL e a confiança calculada for ≥ 85%
+
+Refaça a análise completa das 3 fases com o histórico atualizado.
+${contextNote}` });
     } else if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
       userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT DE ROLETA:
@@ -1378,54 +1392,44 @@ Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números a
                   </div>
                 </div>
 
-                {/* 2. GATILHO — só aparece quando status é BOA (verde) */}
-                {numbers.length > 0 && result?.status_mesa === "BOA" && (() => {
+                {/* 2. GATILHO — só aparece com número E gatilhoAtivo (tripla verificação 85%+) */}
+                {numbers.length > 0 && result && (() => {
+                  // Só mostra o número se o gatilho for genuinamente ativo (85%+, 2 FORTE, NSP)
+                  if (!gatilhoAtivo) return (
+                    <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 8 }}>🎰 GATILHO</div>
+                      <div style={{ fontSize: 12, color: "#2a3040", fontFamily: "monospace", textAlign: "center", padding: "16px 0" }}>
+                        — sem gatilho confirmado —
+                      </div>
+                    </div>
+                  );
                   const lastNum = numbers[numbers.length - 1];
                   const bgLast = lastNum === 0 ? "#1b5e20" : RED_NUMBERS.has(lastNum) ? "#b71c1c" : "#1a1a1a";
                   const nspData = NUMEROS_QUE_SE_PUXAM[lastNum] || [];
-                  const nspAtivo = result?.estrategias?.numeros_puxam?.ativo;
                   const nspForca = result?.estrategias?.numeros_puxam?.forca;
-                  const outrasAtivas = result
-                    ? Object.values(result.estrategias || {}).some(e => e.ativo && e.forca !== "INATIVO" && e.forca !== "FRACO")
-                    : false;
-                  const gatilhoAtivo = nspAtivo || outrasAtivas;
                   return (
-                    <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 16, marginBottom: 14 }}>
-                      <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎰 GATILHO</div>
+                    <div style={{ background: "#0d1118", border: "1px solid #c9a84c60", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎰 GATILHO ATIVO</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                         <div style={{
                           width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
                           background: bgLast,
-                          border: `3px solid ${gatilhoAtivo ? "#c9a84c" : bgLast}`,
+                          border: "3px solid #c9a84c",
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "monospace",
-                          boxShadow: gatilhoAtivo ? "0 0 20px rgba(201,168,76,0.55)" : "none"
+                          boxShadow: "0 0 20px rgba(201,168,76,0.55)"
                         }}>{lastNum}</div>
                         <div style={{ flex: 1 }}>
-                          {!result ? (
-                            <div style={{ fontSize: 11, color: "#4a5568", fontFamily: "monospace", lineHeight: 1.6 }}>
-                              Analise a mesa para verificar se este número ativa algum gatilho
-                            </div>
-                          ) : gatilhoAtivo ? (
-                            <div>
-                              <div style={{ fontSize: 12, color: "#c9a84c", fontFamily: "monospace", fontWeight: 700, marginBottom: 6 }}>
-                                GATILHO ATIVO{nspForca && nspForca !== "INATIVO" ? ` — ${nspForca}` : ""}
-                              </div>
-                              {nspData.length > 0 && (
-                                <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.7 }}>
-                                  {nspData.slice(0, 2).map((d, i) => (
-                                    <div key={i}>→ Alvo{" "}
-                                      <span style={{ color: "#e2e8f0", fontWeight: 700 }}>{d.alvo}</span>
-                                      {d.p.length > 0 && <span style={{ color: "#4a5568" }}> ({d.p.slice(0, 3).join(", ")})</span>}
-                                    </div>
-                                  ))}
+                          <div style={{ fontSize: 12, color: "#c9a84c", fontFamily: "monospace", fontWeight: 700, marginBottom: 6 }}>
+                            NSP {nspForca} — {result.confianca}% confiança
+                          </div>
+                          {nspData.length > 0 && (
+                            <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.7 }}>
+                              {nspData.slice(0, 2).map((d, i) => (
+                                <div key={i}>→ Alvo <span style={{ color: "#e2e8f0", fontWeight: 700 }}>{d.alvo}</span>
+                                  {d.p.length > 0 && <span style={{ color: "#4a5568" }}> ({d.p.slice(0, 3).join(", ")})</span>}
                                 </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace", lineHeight: 1.6 }}>
-                              Não há gatilhos fortes para este número —{" "}
-                              <span style={{ color: "#ffd740" }}>aguardar próximas jogadas</span>
+                              ))}
                             </div>
                           )}
                         </div>

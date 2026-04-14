@@ -752,14 +752,21 @@ export default function RoletaIA() {
       setTimeout(() => setInputError(false), 800);
       return;
     }
-    // ✨ Verificar se o novo número bate com a aposta anterior
     if (result && prevBetNums.length > 0 && prevBetNums.includes(v)) {
       setShowWin(true);
       setTimeout(() => setShowWin(false), 3000);
     }
     setNumbers(prev => {
+      // Se o estado está vazio mas havia números da imagem, restaura deles
+      let base = prev;
+      if (base.length === 0) {
+        try {
+          const saved = sessionStorage.getItem("aria_image_numbers");
+          if (saved) base = JSON.parse(saved);
+        } catch(e) {}
+      }
       // Rolling window: sempre exatamente 10 números
-      const full = [...prev, v];
+      const full = [...base, v];
       const updated = full.length > 10 ? full.slice(-10) : full;
       if (autoAnalyze || result) {
         setTimeout(() => runAnalysis(updated), 100);
@@ -783,6 +790,7 @@ export default function RoletaIA() {
     setError(null);
     setImageBase64(null);
     setImagePreview(null);
+    try { sessionStorage.removeItem("aria_image_numbers"); } catch(e) {}
     const mimeType = file.type || "image/jpeg";
     setImageMediaType(mimeType);
     const reader = new FileReader();
@@ -828,7 +836,11 @@ export default function RoletaIA() {
     const customBlock = customStrategies.filter(s => activeStrategies.has(s.id)).map(s =>
       `\n### ESTRATÉGIA PERSONALIZADA: ${s.title}\n${s.description}`
     ).join("\n");
-    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}\nFAÇA A ANÁLISE COMPLETA e retorne apenas o JSON com os resultados concretos — nunca instruções genéricas.`;
+    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}\nFAÇA A ANÁLISE COMPLETA seguindo a ordem obrigatória:
+1º AVALIE AS 4 DUPLAS com base nos números fornecidos
+2º SOMENTE SE uma dupla estiver FORTE, consulte o NSP para validar o alvo
+3º O NSP é apenas validador — NUNCA use o NSP como razão principal para indicar BOA
+4º Retorne JSON com os resultados concretos — nunca instruções genéricas.`;
 
     const userContent = [];
 
@@ -928,8 +940,10 @@ ${contextNote}` });
         }
         // Manter apenas os 10 primeiros (primeira linha da grade)
         const nums10 = nums20.slice(0, 10);
-        // Armazenar como [oldest→newest] para slice(-7) funcionar corretamente
+        // Armazenar como [oldest→newest] — números manuais subsequentes continuam daqui
         setNumbers([...nums10].reverse());
+        // Salvar referência dos números da imagem para continuidade
+        sessionStorage.setItem("aria_image_numbers", JSON.stringify([...nums10].reverse()));
       }
       // After first analysis, clear imageBase64 so updates use full text history
       setImageBase64(null);

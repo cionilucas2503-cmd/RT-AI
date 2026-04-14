@@ -687,7 +687,7 @@ function parseChipNumbers(apostarEm) {
   return matches ? [...new Set(matches.map(Number))].filter(n => n >= 0 && n <= 36) : [];
 }
 
-function RouletteTable({ result, nspAlvoNum }) {
+function RouletteTable({ result, nspAlvoNum, nspAlvoNums = [] }) {
   if (!result) return null;
   const status = result.status_mesa;
   const isEvitar = status === "EVITAR";
@@ -1516,7 +1516,7 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                 )}
 
                 {/* 6. MESA VISUAL — somente quando BOA */}
-                {result.status_mesa === "BOA" && <RouletteTable result={result} nspAlvoNum={nspAlvoNum} />}
+                {result.status_mesa === "BOA" && <RouletteTable result={result} nspAlvoNum={nspAlvoNum} nspAlvoNums={nspAlvoNums} />}
 
 
               </div>

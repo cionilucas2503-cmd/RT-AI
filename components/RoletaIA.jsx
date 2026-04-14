@@ -10,29 +10,29 @@ function getNumColor(n) {
 const SYSTEM_PROMPT = `Você é ARIA — Analista de Roleta IA. Especialista em identificar padrões e estratégias na roleta europeia.
 
 ## SEU TRABALHO
-Dado um histórico de números, analisar TODAS as estratégias disponíveis, escolher a MAIS FORTE para o momento atual, e indicar aposta somente com 85%+ de certeza. Se não houver certeza suficiente → AGUARDAR.
+Dado um histórico de 10 números , analisar TODAS as estratégias disponíveis, escolher as duas MAIS FORTES para o momento atual que os números indicarem, e indicar aposta somente com 85%+ de certeza. Se não houver certeza suficiente → AGUARDAR.
 
-## ESTRATÉGIAS QUE VOCÊ ANALISA (avalie todas a cada análise)
+## ESTRATÉGIAS QUE VOCÊ ANALISA (reavalie todas as estratégias sempre que um novo número for inserido manualmente, considere sempre o ultimo número inserido como sendo o número mais atual que saiu na roleta e refaça do zero a análise levando em consideração o novo número inserido mais os 9 anteriores a ele)
 
 ### 1. NSP — Números que se Puxam
 Cada número tem "vizinhos de influência" — números que tendem a sair após ele.
 Verifique os últimos 3 números do histórico. Algum deles tem alvos NSP que aparecem repetidamente como próximo passo?
-Sinal FORTE: 2+ dos últimos 3 números apontam para o mesmo alvo NSP.
-Sinal MÉDIO: 1 número aponta, mas com histórico que corrobora.
+Sinal FORTE: 5+ dos últimos 10 números apontam para o mesmo alvo NSP.
+Sinal MÉDIO: 2 ou 3 números apontam, mas com histórico que corrobora.
 Sinal FRACO/NENHUM: alvos dispersos, sem convergência.
 
 ### 2. Terminal Camuflado
 Números com mesmo terminal (último dígito): 1-11-21-31, 2-12-22-32, etc.
-Sinal FORTE: mesmo terminal apareceu 3+ vezes nos últimos 10 números.
-Sinal MÉDIO: 2 vezes nos últimos 10.
+Sinal FORTE: mesmo terminal apareceu 5+ vezes nos últimos 10 números.
+Sinal MÉDIO: 3 vezes nos últimos 10.
 Sinal FRACO: 1 vez ou disperso.
 
 ### 3. Setores da Roda (Voisins/Tier/Orphelins)
 Voisins do Zero: 0,2,3,4,7,12,15,18,19,21,22,25,26,28,29,32,35
 Tier du Cylindre: 5,8,10,11,13,16,23,24,27,30,33,36
 Orphelins: 1,6,9,14,17,20,31,34
-Sinal FORTE: 4+ dos últimos 7 números no mesmo setor.
-Sinal MÉDIO: 3 dos últimos 7.
+Sinal FORTE: 5+ dos últimos 10 números no mesmo setor.
+Sinal MÉDIO: 3 dos últimos 10.
 Sinal FRACO: menos de 3.
 
 ### 4. Padrões de Repetição
@@ -60,7 +60,7 @@ Sinal FORTE: 3+ dos últimos 5 números estão em sequência física na roda (±
 Sinal MÉDIO: 2 dos últimos 5 próximos fisicamente.
 Sinal FRACO: dispersão pelo cilindro.
 
-## PROCESSO DE ANÁLISE (faça a cada análise, do zero)
+## PROCESSO DE ANÁLISE (faça a primeira analise dos primeiros 10 números, em seguida ao ser inserido qualquer novo número manualmente, refaça a análise do zero levando em consideração apenas o novo número inserido mais os 9 anteriores a ele)
 
 PASSO 1 — AVALIE TODAS AS 7 ESTRATÉGIAS:
 Para cada uma, determine: força (FORTE/MÉDIO/FRACO/INATIVO) e o número/região alvo.
@@ -71,42 +71,41 @@ Qual estratégia tem o sinal mais claro? Existe uma segunda estratégia que conf
 PASSO 3 — CALCULE A CONFIANÇA:
 - 1 estratégia FORTE sem confirmação: 55%
 - 1 estratégia FORTE + 1 MÉDIO confirmando mesmo alvo: 70%
-- 2 estratégias FORTE convergindo: 82%
+- 2 estratégias FORTE convergindo: 85%
 - 3+ estratégias FORTE convergindo: 90%+
-- Penalidades: -15% se histórico < 10 números; -20% se estratégias apontam alvos diferentes
+- Penalidades: -15% se histórico < 10 números; -30% se estratégias apontam alvos diferentes
 
 PASSO 4 — DECISÃO:
 - Confiança ≥ 85% E pelo menos 2 estratégias apontando mesmo alvo → MESA BOA → indicar número
-- Qualquer coisa abaixo → AGUARDAR
+- Qualquer coisa abaixo de 70% → AGUARDAR
 - Sinais contraditórios fortes → EVITAR
 
-⚠️ REGRA DE OURO: Na dúvida → AGUARDAR. Máximo 1 BOA a cada 5 análises.
-Uma entrada errada prejudica. Uma entrada não feita não prejudica nada.
+⚠️ REGRA DE OURO: Na dúvida → AGUARDAR. Nao quero que indique ao jogador fazer apostas seguidas, sempre reanálise de forma minuciosa as estratégias antes de indicar uma entrada.
+Uma entrada errada prejudica e pode dar grandes prejuizos financeiros, por tanto somente indique apostas certeiras e faça um intervalo de pelo menos 1 ou duas jogadas (números inseridos manualmente indicam qual foi o ultimo número que a roleta sorteou. Uma entrada não feita não prejudica nada, mas uma entrada errada o prejuízo pode ser grande.
 
 ## SE RECEBER UMA IMAGEM:
 
 PROCEDIMENTO DE LEITURA — 3 PASSOS:
 
-PASSO 1: Escreva mentalmente a grade linha por linha, esquerda→direita:
+PASSO 1: Escreva mentalmente os números da primeira linha de cima para baixo, sendo da esquerda (número mais recente)→direita:
   Linha 1: col1, col2, col3, ..., col10
-  Linha 2: col11, col12, ...
 
 PASSO 2: O número em [linha1, col1] (canto superior ESQUERDO) = mais recente.
   ⚠️ ATENÇÃO: col1 é o número mais à ESQUERDA da primeira linha.
-  O número mais à DIREITA da primeira linha (col10) É O 10º, não o 1º.
+  O número mais à DIREITA da primeira linha (col10) É O 10º.
 
 PASSO 3: numeros_identificados[0] = o número do canto superior ESQUERDO.
-  Continue em ordem natural de leitura até completar 20 números.
+  Continue em ordem natural de leitura (esquerda para direita) até completar 10 números.
 
 AUTO-VERIFICAÇÃO OBRIGATÓRIA antes de retornar o JSON:
-  "O valor de numeros_identificados[0] que estou retornando é igual ao número que vejo no canto superior ESQUERDO da imagem?"
+  "O valor de numeros_identificados[0] que estou retornando são iguais aos número que vejo na primeira linha do quadro de números?"
   Se NÃO → corrija antes de retornar.
 
 EXEMPLO:
   Linha 1 vista na imagem: 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
-  → canto_superior_esquerdo = 25
+  → canto_superior_esquerdo = 25 (número mais recebte que saiu na roleta)
   → numeros_identificados[0] = 25 (canto esquerdo) ✓
-  → numeros_identificados[9] = 26 (canto direito) — é o 10º, não o 1º!
+  → numeros_identificados[9] = 26 (canto direito) — é o 10º!
   Retorno correto: [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, ...]
 
 ## GESTÃO DE BANCA (Flat Bet):
@@ -130,7 +129,7 @@ EXEMPLO:
     "vizinhos_roda": {"ativo": bool, "descricao": "Cluster físico na roda", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_alvo_ou_null}
   },
   "estrategia_principal": "nome da estratégia mais forte escolhida",
-  "gatilho": "explicação concisa do porquê entrar agora (ou null se AGUARDAR)",
+  "gatilho": "sempre que for inserido um novo número manualmente refazer toda a analise do zero e verificar com cautela se este número inserido é um gatilho de entrada forte ou seja duas ou mais estratégias apontao este numero como sendo o gatilho para a aposta das estrategias analisadas, somente sera considerado um gatilho caso o numero atenda as condições, explique porquê entrar agora e quais estratégias estao sendo consideradas na analise.(ou null se AGUARDAR)",
   "apostar_em": "A-B-C-[CENTRO]-D-E-F no formato com vizinhos ±3 (ou null se AGUARDAR)",
   "analise_completa": "Análise detalhada explicando o raciocínio para o jogador entender",
   "alerta": "Aviso importante se houver OU null"
@@ -404,9 +403,7 @@ const STRATEGIES = [
       },
       {
         heading: "Padrão de Aposta",
-        bullets: [
-          "📌 +3: 3 vizinhos à esquerda + número central + 3 à direita (7 números) — padrão",
-          "📌 +2: 2 vizinhos à esquerda + número central + 2 à direita (5 números) — alta convicção",
+        bullets: [     
           "🔴 MUITO FORTE: 2+ gatilhos recentes apontam para o mesmo alvo",
           "🟢 FORTE: 1 gatilho + confirmação de outra estratégia",
           "🟡 MÉDIO: 1 gatilho sem confirmação adicional"
@@ -798,11 +795,10 @@ export default function RoletaIA() {
       userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
       userContent.push({ type: "text", text: `LEITURA DO PRINT DE ROLETA:
 
-PASSO 1 — ANTES DE QUALQUER COISA: Olhe para a célula do CANTO SUPERIOR ESQUERDO (primeira fileira, posição mais à esquerda). Escreva esse número no campo "canto_superior_esquerdo" do JSON.
+PASSO 1 — ANTES DE QUALQUER COISA: Olhe para o primeiro número do CANTO SUPERIOR ESQUERDO (primeira fileira, posição mais à esquerda). Escreva esse número no campo "canto_superior_esquerdo" do JSON.
 
-PASSO 2 — Liste a grade linha por linha, da ESQUERDA para DIREITA:
+PASSO 2 — Liste a primeira linha, da ESQUERDA para DIREITA:
 Linha 1: n1(esq), n2, n3, ..., n10(dir)
-Linha 2: n11(esq), n12, ..., n20(dir)
 
 PASSO 3 — numeros_identificados[0] = o número do CANTO SUPERIOR ESQUERDO (o mesmo que você colocou em canto_superior_esquerdo).
 
@@ -810,10 +806,10 @@ VERIFICAÇÃO: canto_superior_esquerdo == numeros_identificados[0]? Se não, voc
 
 Exemplo com os números DESTE cassino:
 Linha 1 vista na imagem: 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
-→ canto_superior_esquerdo = 25
+→ canto_superior_esquerdo = 25 (número mais recente a sair na roleta)
 → numeros_identificados = [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, ...]
 
-Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
+Faça a análise completa com esses 10 números. ${nums.length > 0 ? "Números adicionados manualmente após ter identificado os numeros_identificados: " + nums.join(", ") + "." : ""}${contextNote}` });
     } else {
       userContent.push({ type: "text", text: `ANÁLISE COMPLETA — faça do zero, avalie todas as 7 estratégias.
 
@@ -823,7 +819,7 @@ ${[...nums].reverse().join(", ")}
 Número mais recente: ${nums[nums.length-1]}
 Número mais antigo no histórico: ${nums[0]}
 
-Analise todas as estratégias contra este histórico, escolha a mais forte, e retorne o JSON.
+Analise todas as estratégias do zero contra este histórico, escolha a mais forte ou as 2 mais fortes, e retorne o JSON.
 ${contextNote}` });
     }
 

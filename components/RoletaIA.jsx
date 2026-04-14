@@ -851,7 +851,9 @@ export default function RoletaIA() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: userContent }]
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userContent }],
+          max_tokens: 1500
         })
       });
       const data = await res.json();

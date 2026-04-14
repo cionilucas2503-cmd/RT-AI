@@ -1086,6 +1086,7 @@ export default function RoletaIA() {
             ARIA
           </div>
           <div style={{ fontSize: 10, letterSpacing: 4, color: "#4a5568", fontFamily: "monospace", marginTop: 2 }}>ANALISTA DE ROLETA IA</div>
+          <div style={{ fontSize: 9, color: "#2a3040", fontFamily: "monospace", marginTop: 4 }}>v3.0 — ALGORITMO DETERMINÍSTICO</div>
         </div>
 
         {/* Tabs */}

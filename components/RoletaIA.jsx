@@ -1280,55 +1280,92 @@ ${contextNote}` });
 
                 {/* 5. NÚMEROS DA JOGADA — somente quando BOA */}
                 {result.status_mesa === "BOA" && (() => {
-                  if (result.status_mesa !== "BOA" || !result.apostar_em) return (
+                  if (!result.apostar_em) return (
                     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎲 NÚMEROS DA JOGADA</div>
                       {aguardarFrase}
                     </div>
                   );
+
+                  // Números da DUPLA (apostar_em)
                   const cm = result.apostar_em.match(/\[(\d+)\]/g) || [];
-                  const cn = [...new Set([
-                    ...cm.map(m => parseInt(m.replace(/[\[\]]/g, ""))),
-                    ...nspAlvoNums
-                  ])];
-                  if (cn.length === 0) return null;
+                  const duplaNumbers = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+
+                  // Números do NSP (nspAlvoNums separado)
+                  const nspNumbers = nspAlvoNums.filter(n => !duplaNumbers.includes(n));
+
+                  const renderRow = (centerNum, borderColor, labelColor, label) => {
+                    const bet = getWheelBet(centerNum, 3);
+                    return (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: "flex", gap: 5, justifyContent: "center", alignItems: "center" }}>
+                          {bet.all.map((num, i) => {
+                            const isC = num === centerNum;
+                            const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                            return (
+                              <div key={i} style={{
+                                width: isC ? 46 : 34, height: isC ? 46 : 34,
+                                borderRadius: "50%", background: bg,
+                                border: `2px solid ${isC ? borderColor : "#f0d060"}`,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: isC ? 15 : 11, fontWeight: 900, color: "#fff",
+                                fontFamily: "monospace", flexShrink: 0,
+                                boxShadow: isC ? `0 0 14px ${borderColor}88` : "none",
+                              }}>{num}</div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  };
+
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #1e90ff30", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#1e90ff", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>
                         🎲 NÚMEROS DA JOGADA
                       </div>
-                      {cn.map((centerNum, idx) => {
-                        const bet = getWheelBet(centerNum, 3);
-                        return (
-                          <div key={idx} style={{ marginBottom: idx < cn.length - 1 ? 12 : 0 }}>
-                            <div style={{ display: "flex", gap: 5, justifyContent: "center", alignItems: "center" }}>
-                              {bet.all.map((num, i) => {
-                                const isC = num === centerNum;
-                                const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
-                                return (
-                                  <div key={i} style={{
-                                    width: isC ? 46 : 36, height: isC ? 46 : 36,
-                                    borderRadius: "50%",
-                                    background: bg,
-                                    border: `2px solid ${isC ? "#1e90ff" : "#f0d060"}`,
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: isC ? 15 : 11, fontWeight: 900, color: "#fff",
-                                    fontFamily: "monospace", flexShrink: 0,
-                                    boxShadow: isC ? "0 0 14px rgba(30,144,255,0.55)" : "none",
-                                  }}>{num}</div>
-                                );
-                              })}
-                            </div>
+
+                      {/* Seção DUPLA */}
+                      {duplaNumbers.length > 0 && (
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: 9, color: "#1e90ff", fontFamily: "monospace", letterSpacing: 2, marginBottom: 8, textAlign: "center" }}>
+                            📐 DUPLA {result.dupla_ativa} — APOSTA PRINCIPAL
                           </div>
-                        );
-                      })}
-                      <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                          <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#1e90ff" }} />
-                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>CENTRAL</span>
+                          {duplaNumbers.map((n, i) => (
+                            <div key={i}>{renderRow(n, "#1e90ff", "#1e90ff", "dupla")}</div>
+                          ))}
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                          <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#f0d060" }} />
+                      )}
+
+                      {/* Divisor */}
+                      {duplaNumbers.length > 0 && nspNumbers.length > 0 && (
+                        <div style={{ borderTop: "1px solid #1a2030", marginBottom: 14 }} />
+                      )}
+
+                      {/* Seção NSP */}
+                      {nspNumbers.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 9, color: "#c9a84c", fontFamily: "monospace", letterSpacing: 2, marginBottom: 8, textAlign: "center" }}>
+                            🔗 NSP — ALVOS CONFIRMADOS
+                          </div>
+                          {nspNumbers.map((n, i) => (
+                            <div key={i}>{renderRow(n, "#c9a84c", "#c9a84c", "nsp")}</div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Legenda */}
+                      <div style={{ display: "flex", gap: 14, marginTop: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#1e90ff" }} />
+                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>DUPLA</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#c9a84c" }} />
+                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>NSP</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f0d060" }} />
                           <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>VIZINHOS ±3</span>
                         </div>
                       </div>

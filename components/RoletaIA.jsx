@@ -323,28 +323,28 @@ Exemplo 2 — AGUARDAR:
 
 ## SE RECEBER UMA IMAGEM:
 
-⚠️ REGRA CRÍTICA DE LEITURA — NUNCA ERRE ISTO:
-O número no CANTO SUPERIOR ESQUERDO [linha1, coluna1] = MAIS RECENTE (saiu por último).
-O número no CANTO SUPERIOR DIREITO NÃO é o mais recente. É o 10º, não o 1º.
-Leia COMO UM LIVRO: esquerda→direita, cima→baixo. NUNCA da direita para esquerda.
+ATENÇÃO: ERRO FREQUENTE — A IA TENDE A LER DA DIREITA PARA ESQUERDA. ISSO ESTÁ ERRADO.
 
-EXEMPLO REAL COM 10 COLUNAS:
-       col1  col2  col3  col4  col5  col6  col7  col8  col9 col10
-linha1:  17    25     6    36    24    12    12    15     1    27
-linha2:  24    36    23    31    17    28    11    27    20    21
+REGRA OBRIGATÓRIA DE LEITURA:
+• O número na COLUNA 1 (extrema ESQUERDA) da LINHA 1 (topo) = MAIS RECENTE
+• O número na COLUNA 10 (extrema DIREITA) da LINHA 1 = 10º mais recente — NÃO o 1º
+• Leia sempre: col1→col2→col3→...→col10 em cada linha (esquerda para direita)
 
-LEITURA CORRETA: [17, 25, 6, 36, 24, 12, 12, 15, 1, 27, 24, 36, 23, 31, 17, 28, 11, 27, 20, 21]
-→ 17 = mais recente (col1, linha1) ✓
-→ 27 = 10º mais recente (col10, linha1) — NÃO É O MAIS RECENTE!
+EXEMPLO REAL DO CASSINO DO USUÁRIO:
+linha1: 25 | 11 | 27 | 28 | 24 | 16 | 23 | 31 | 12 | 26
+linha2: 34 | 15 | 33 | 16 | 30 | 19 | 34 | 32 | 21 | 19
 
-LEITURA ERRADA (não faça): [27, 1, 15, 12, 12, 24, 36, ...] ← leitura da direita para esquerda
+✅ CORRETO: [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, 34, 15, 33, 16, 30, 19, 34, 32, 21, 19]
+   (25 = mais recente, 26 = 10º, 34 = 11º...)
+
+❌ ERRADO (erro que você não pode cometer): [26, 12, 31, 23, 16, 24, 28, ...]
+   (seria começar pelo lado DIREITO — NUNCA FAÇA ISSO)
 
 PROCEDIMENTO:
-1. Localize o número no canto superior ESQUERDO = posição [linha1, col1] = mais recente
-2. Leia linha por linha, sempre da esquerda para a direita
-3. Extraia os primeiros 20 números = janela de análise
+1. Olhe para a EXTREMA ESQUERDA da linha do topo → esse número = mais recente
+2. Leia da esquerda para a direita em cada linha
+3. Extraia os primeiros 20 números
 4. numeros_identificados = [mais_recente, 2º, 3º, ..., 20º]
-5. NUNCA inverta, NUNCA comece pelo lado direito
 
 ## GESTÃO DE BANCA (Flat Bet):
 - Stop Gain do dia: +20% da banca
@@ -1050,22 +1050,22 @@ ${contextNote}` });
       userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
       userContent.push({ type: "text", text: `LEITURA OBRIGATÓRIA DO PRINT DE ROLETA:
 
-REGRA ÚNICA E INVIOLÁVEL DE LEITURA:
-→ O número na posição CANTO SUPERIOR ESQUERDO [linha 1, coluna 1] = MAIS RECENTE
-→ Leia EXATAMENTE como um livro ocidental: esquerda→direita, linha por linha, cima→baixo
-→ NÃO leia da direita para esquerda. NÃO comece pelo canto direito.
+LEIA O GRID DA SEGUINTE FORMA — SEM EXCEÇÃO:
 
-EXEMPLO EXATO (10 colunas, formato tabela):
-       col1  col2  col3  col4  col5  col6  col7  col8  col9 col10
-linha1:  17    25     6    36    24    12    12    15     1    27
-linha2:  24    36    23    31    17    28    11    27    20    21
+PASSO 1: Encontre o número na EXTREMA ESQUERDA da LINHA DO TOPO → esse é o MAIS RECENTE.
+PASSO 2: Continue lendo da esquerda para a direita nessa mesma linha.
+PASSO 3: Quando acabar a linha, continue da esquerda da linha seguinte.
 
-→ [linha1,col1]=17 É O MAIS RECENTE
-→ [linha1,col10]=27 É O 10º MAIS RECENTE (não o 1º!)
-→ Correto: numeros_identificados = [17, 25, 6, 36, 24, 12, 12, 15, 1, 27, 24, 36, 23, 31, 17, 28, 11, 27, 20, 21]
-→ ERRADO seria: [27, 1, 15, 12, 12, 24, 36, ...] (leitura invertida — NÃO FAÇA ISSO)
+EXEMPLO COM OS NÚMEROS DESTE CASSINO:
+linha1: [25] [11] [27] [28] [24] [16] [23] [31] [12] [26]
+linha2: [34] [15] [33] [16] [30] [19] [34] [32] [21] [19]
 
-Extraia os PRIMEIROS 20 números desta leitura e retorne em numeros_identificados: [mais_recente, 2º, ..., 20º]
+→ 25 = mais recente (1º da linha 1, lado esquerdo)
+→ 26 = 10º mais recente (último da linha 1, lado direito) — NÃO É O 1º!
+→ numeros_identificados CORRETO: [25, 11, 27, 28, 24, 16, 23, 31, 12, 26, 34, 15, 33, 16, 30, 19, 34, 32, 21, 19]
+→ numeros_identificados ERRADO: [26, 12, 31, 23, 16, 24, 28, ...] ← NUNCA FAÇA ISSO
+
+Extraia os primeiros 20 números desta forma e retorne em numeros_identificados: [mais_recente, 2º, ..., 20º]
 
 Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números adicionados manualmente após o print: " + nums.join(", ") + "." : ""}${contextNote}` });
     } else {
@@ -1132,8 +1132,19 @@ Faça a análise completa com esses 20 números. ${nums.length > 0 ? "Números a
         setPrevBetNums([]);
       }
       if (parsed.numeros_identificados?.length > 0) {
-        // numeros_identificados: AI returns [newest→oldest], store as [oldest→newest] so slice(-7) = last 7
-        setNumbers([...parsed.numeros_identificados].reverse());
+        // AI consistently reads each 10-column row RIGHT-TO-LEFT in grid format
+        // Fix: reverse each group of 10 numbers (each row) to restore left-to-right order
+        // Then reverse the whole array to store oldest-first (so slice(-7) = 7 most recent)
+        const raw = parsed.numeros_identificados;
+        const ROW_SIZE = 10;
+        const corrected = [];
+        for (let i = 0; i < raw.length; i += ROW_SIZE) {
+          // Each row from AI is backwards — reverse it to get correct left→right order
+          const row = raw.slice(i, i + ROW_SIZE).reverse();
+          corrected.push(...row);
+        }
+        // corrected = [newest→oldest] in correct order; store as [oldest→newest]
+        setNumbers([...corrected].reverse());
       }
       // After first analysis, clear imageBase64 so updates use full text history
       setImageBase64(null);

@@ -1153,32 +1153,57 @@ export default function RoletaIA() {
                   </div>
                 </div>
 
-                {/* 2A. NÚMEROS (quando BOA) */}
-                {result.status_mesa === "BOA" && result.apostar_em && (() => {
-                  const centerMatches = result.apostar_em.match(/\[(\d+)\]/g) || [];
-                  const centerNums = centerMatches.map(m => parseInt(m.replace(/[\[\]]/g, "")));
-                  const lines = result.apostar_em.split("\n").filter(Boolean);
-                  const labels = lines.filter(l => l.includes("+") || (l.includes("→") && !l.includes("["))).slice(0, centerNums.length);
-                  if (centerNums.length === 0) return null;
+                {/* 2. GATILHO — último número que saiu, verifica se ativa estratégias */}
+                {numbers.length > 0 && (() => {
+                  const lastNum = numbers[numbers.length - 1];
+                  const bgLast = lastNum === 0 ? "#1b5e20" : RED_NUMBERS.has(lastNum) ? "#b71c1c" : "#1a1a1a";
+                  const nspData = NUMEROS_QUE_SE_PUXAM[lastNum] || [];
+                  const nspAtivo = result?.estrategias?.numeros_puxam?.ativo;
+                  const nspForca = result?.estrategias?.numeros_puxam?.forca;
+                  const outrasAtivas = result
+                    ? Object.values(result.estrategias || {}).some(e => e.ativo && e.forca !== "INATIVO" && e.forca !== "FRACO")
+                    : false;
+                  const gatilhoAtivo = nspAtivo || outrasAtivas;
                   return (
-                    <div style={{ background: "#0d1118", border: "1px solid #c9a84c40", borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                    <div style={{ background: "#0d1118", border: `1px solid ${gatilhoAtivo ? "#c9a84c60" : "#1a2030"}`, borderRadius: 16, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎰 GATILHO</div>
-                      <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
-                        {centerNums.map((num, i) => {
-                          const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
-                          return (
-                            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                              <div style={{
-                                width: 68, height: 68, borderRadius: "50%",
-                                background: bg, border: "3px solid #c9a84c",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 24, fontWeight: 900, color: "#fff", fontFamily: "monospace",
-                                boxShadow: "0 0 24px rgba(201,168,76,0.7)", flexShrink: 0
-                              }}>{num}</div>
-                              {labels[i] && <div style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace", textAlign: "center", maxWidth: 80 }}>{labels[i]}</div>}
+                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <div style={{
+                          width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
+                          background: bgLast,
+                          border: `3px solid ${gatilhoAtivo ? "#c9a84c" : "#333"}`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                          boxShadow: gatilhoAtivo ? "0 0 20px rgba(201,168,76,0.55)" : "none"
+                        }}>{lastNum}</div>
+                        <div style={{ flex: 1 }}>
+                          {!result ? (
+                            <div style={{ fontSize: 11, color: "#4a5568", fontFamily: "monospace", lineHeight: 1.6 }}>
+                              Analise a mesa para verificar se este número ativa algum gatilho
                             </div>
-                          );
-                        })}
+                          ) : gatilhoAtivo ? (
+                            <div>
+                              <div style={{ fontSize: 12, color: "#c9a84c", fontFamily: "monospace", fontWeight: 700, marginBottom: 6 }}>
+                                GATILHO ATIVO{nspForca && nspForca !== "INATIVO" ? ` — ${nspForca}` : ""}
+                              </div>
+                              {nspData.length > 0 && (
+                                <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.7 }}>
+                                  {nspData.slice(0, 2).map((d, i) => (
+                                    <div key={i}>→ Alvo{" "}
+                                      <span style={{ color: "#e2e8f0", fontWeight: 700 }}>{d.alvo}</span>
+                                      {d.p.length > 0 && <span style={{ color: "#4a5568" }}> ({d.p.slice(0, 3).join(", ")})</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 12, color: "#4a5568", fontFamily: "monospace", lineHeight: 1.6 }}>
+                              Não há gatilhos fortes para este número —{" "}
+                              <span style={{ color: "#ffd740" }}>aguardar próximas jogadas</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

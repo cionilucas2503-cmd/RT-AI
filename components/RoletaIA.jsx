@@ -912,7 +912,30 @@ export default function RoletaIA() {
       }
 
       const clean = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+
+      // Fix: sanitize control characters inside JSON string values
+      // (AI sometimes returns literal newlines inside strings breaking JSON.parse)
+      function fixControlChars(str) {
+        let result = "";
+        let inString = false;
+        let escaped = false;
+        for (let i = 0; i < str.length; i++) {
+          const ch = str[i];
+          if (escaped) { result += ch; escaped = false; continue; }
+          if (ch === "\\" && inString) { result += ch; escaped = true; continue; }
+          if (ch === '"') { inString = !inString; result += ch; continue; }
+          if (inString && ch.charCodeAt(0) < 0x20) {
+            if (ch === "\n") result += "\\n";
+            else if (ch === "\r") result += "\\r";
+            else if (ch === "\t") result += "\\t";
+            continue;
+          }
+          result += ch;
+        }
+        return result;
+      }
+
+      const parsed = JSON.parse(fixControlChars(clean));
       setResult(parsed);
       if (parsed.numeros_identificados?.length > 0) {
         setNumbers(parsed.numeros_identificados);

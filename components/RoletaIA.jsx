@@ -700,8 +700,8 @@ function RouletteTable({ result, nspAlvoNum }) {
     ? (result.apostar_em.match(/\[(\d+)\]/g) || []).map(m => parseInt(m.replace(/[\[\]]/g, "")))
     : [];
   const mainChipNums = mainCenterNums.flatMap(n => getWheelBet(n, 3).all);
-  const nspChipNums = (isBoa && nspAlvoNum !== null && nspAlvoNum !== undefined)
-    ? getWheelBet(nspAlvoNum, 3).all : [];
+  const nspChipNums = isBoa
+    ? nspAlvoNums.flatMap(n => getWheelBet(n, 3).all) : [];
   const chipNums = [...new Set([...mainChipNums, ...nspChipNums])];
   const gatilhoNums = [];  // nunca destaca gatilhos — jogada só quando verde
 
@@ -710,7 +710,7 @@ function RouletteTable({ result, nspAlvoNum }) {
     const m = result.apostar_em?.match(/\[(\d+)\]/g) || [];
     if (m.some(x => parseInt(x.replace(/[\[\]]/g, "")) === n)) return true;
     // NSP alvo central
-    if (nspAlvoNum !== null && nspAlvoNum !== undefined && n === nspAlvoNum) return true;
+    if (nspAlvoNums.includes(n)) return true;
     return false;
   };
 
@@ -1079,14 +1079,17 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
   }
 
   // NSP alvo do último número — usado em JOGADA INDICADA, NÚMEROS DA JOGADA e RouletteTable
-  const nspAlvoNum = (() => {
-    if (!numbers.length) return null;
+  // Todos os números alvo do último gatilho (NSP) — array com um número por entrada alvo
+  const nspAlvoNums = (() => {
+    if (!numbers.length) return [];
     const lastN = numbers[numbers.length - 1];
     const data = NUMEROS_QUE_SE_PUXAM[lastN] || [];
-    if (!data.length) return null;
-    const n = parseInt((data[0].alvo || "").split(",")[0]);
-    return !isNaN(n) && n >= 0 && n <= 36 ? n : null;
+    return data.map(d => {
+      const n = parseInt((d.alvo || "").split(",")[0]);
+      return (!isNaN(n) && n >= 0 && n <= 36) ? n : null;
+    }).filter(n => n !== null);
   })();
+  const nspAlvoNum = nspAlvoNums[0] ?? null;  // compat com RouletteTable
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
   const statusBg = result ? (result.status_mesa === "BOA" ? "rgba(0,230,118,0.1)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.1)" : "rgba(255,215,64,0.1)") : null;
@@ -1398,18 +1401,22 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                               </div>
                             </div>
                           )}
-                          {nspAlvoNum !== null && nspAlvoNum !== undefined && (
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, borderTop: "1px solid #1a2030", paddingTop: 10 }}>
-                              <span style={{ fontSize: 10, color: "#c9a84c", fontFamily: "monospace", letterSpacing: 1 }}>NSP →</span>
-                              {(() => {
-                                const bgNsp = nspAlvoNum === 0 ? "#1b5e20" : RED_NUMBERS.has(nspAlvoNum) ? "#b71c1c" : "#1a1a1a";
-                                return (
-                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: bgNsp, border: "2px solid #c9a84c", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace" }}>
-                                    {nspAlvoNum}
-                                  </div>
-                                );
-                              })()}
-                              <span style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace" }}>Alvo do gatilho NSP</span>
+                          {nspAlvoNums.length > 0 && (
+                            <div style={{ marginTop: 10, borderTop: "1px solid #1a2030", paddingTop: 10 }}>
+                              <div style={{ fontSize: 10, color: "#c9a84c", fontFamily: "monospace", letterSpacing: 1, marginBottom: 8 }}>NSP → ALVOS DO GATILHO</div>
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                                {nspAlvoNums.map((num, i) => {
+                                  const bgNsp = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                                  return (
+                                    <div key={i} style={{ width: 36, height: 36, borderRadius: "50%", background: bgNsp, border: "2px solid #c9a84c", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", fontFamily: "monospace", flexShrink: 0 }}>
+                                      {num}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace", marginTop: 6 }}>
+                                Alvos do gatilho — cada um com 3 fichas de proteção
+                              </div>
                             </div>
                           )}
                         </>
@@ -1454,7 +1461,7 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   const cm = result.apostar_em.match(/\[(\d+)\]/g) || [];
                   const cn = [...new Set([
                     ...cm.map(m => parseInt(m.replace(/[\[\]]/g, ""))),
-                    ...(nspAlvoNum !== null && nspAlvoNum !== undefined ? [nspAlvoNum] : [])
+                    ...nspAlvoNums
                   ])];
                   if (cn.length === 0) return null;
                   return (

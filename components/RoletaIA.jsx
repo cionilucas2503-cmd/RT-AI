@@ -1081,53 +1081,31 @@ export default function RoletaIA() {
 
                 {/* 2A. NÚMEROS (quando BOA) */}
                 {result.status_mesa === "BOA" && result.apostar_em && (() => {
-                  const blocos = result.apostar_em.split("\n\n").filter(Boolean);
+                  const centerMatches = result.apostar_em.match(/\[(\d+)\]/g) || [];
+                  const centerNums = centerMatches.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  const lines = result.apostar_em.split("\n").filter(Boolean);
+                  const labels = lines.filter(l => l.includes("+") || (l.includes("→") && !l.includes("["))).slice(0, centerNums.length);
+                  if (centerNums.length === 0) return null;
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #c9a84c40", borderRadius: 16, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>🎯 APOSTAR AGORA</div>
-                      {blocos.map((bloco, bi) => {
-                        const linhas = bloco.split("\n").filter(Boolean);
-                        const label = linhas.find(l => l.includes("+") || l.includes("→") || l.includes(":")) || "";
-                        const numLinha = linhas.find(l => /\d/.test(l) && !l.includes(":") && !l.includes("+"));
-                        if (!numLinha) return null;
-                        const tokens = numLinha.trim().split(/\s+/).filter(Boolean);
-                        return (
-                          <div key={bi} style={{ marginBottom: bi < blocos.length - 1 ? 20 : 0 }}>
-                            {label && <div style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace", marginBottom: 10 }}>{label}</div>}
-                            <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
-                              {tokens.map((t, ti) => {
-                                if (t === "-" || t === "—" || t === "–") {
-                                  return <span key={ti} style={{ color: "#334155", fontSize: 18, lineHeight: 1, fontWeight: 200 }}>—</span>;
-                                }
-                                const isCtr = t.startsWith("[");
-                                const n = t.replace(/[\[\]]/g, "");
-                                const num = parseInt(n);
-                                if (isNaN(num)) return null;
-                                // Só mostra bolinha no número central
-                                if (isCtr) {
-                                  const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
-                                  return (
-                                    <div key={ti} style={{
-                                      width: 58, height: 58, borderRadius: "50%",
-                                      background: bg, border: "3px solid #c9a84c",
-                                      display: "flex", alignItems: "center", justifyContent: "center",
-                                      fontSize: 20, fontWeight: 900, color: "#fff", fontFamily: "monospace",
-                                      boxShadow: "0 0 24px rgba(201,168,76,0.7)", flexShrink: 0
-                                    }}>{n}</div>
-                                  );
-                                }
-                                // Números vizinhos: só texto
-                                return (
-                                  <span key={ti} style={{
-                                    fontSize: 14, fontWeight: 700, color: "#94a3b8",
-                                    fontFamily: "monospace", minWidth: 22, textAlign: "center"
-                                  }}>{n}</span>
-                                );
-                              })}
+                      <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
+                        {centerNums.map((num, i) => {
+                          const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#212121";
+                          return (
+                            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                              <div style={{
+                                width: 68, height: 68, borderRadius: "50%",
+                                background: bg, border: "3px solid #c9a84c",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 24, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                                boxShadow: "0 0 24px rgba(201,168,76,0.7)", flexShrink: 0
+                              }}>{num}</div>
+                              {labels[i] && <div style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace", textAlign: "center", maxWidth: 80 }}>{labels[i]}</div>}
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })()}

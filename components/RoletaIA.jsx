@@ -844,8 +844,8 @@ export default function RoletaIA() {
 
   async function runAnalysis(updatedNumbers) {
     const nums = updatedNumbers || numbers;
-    const isUpdate = !!result && !imageBase64;
-    if (nums.length < 5 && !imageBase64) {
+    const isUpdate = !!result && nums.length > 0;
+    if (nums.length < 5 && !imageBase64 && !isUpdate) {
       setError("Adicione pelo menos 5 números ou envie um print da mesa.");
       return;
     }
@@ -854,7 +854,7 @@ export default function RoletaIA() {
     if (!isUpdate) setResult(null);
 
     const nums = updatedNumbers || numbers;
-    const isUpdate = !!result && !imageBase64;
+    const isUpdate = !!result && nums.length > 0;
     const allStrategies = [...STRATEGIES, ...customStrategies];
     const activeList = allStrategies.filter(s => activeStrategies.has(s.id));
     const activeNames = activeList.map(s => s.title).join(", ");
@@ -866,10 +866,9 @@ export default function RoletaIA() {
     const userContent = [];
 
     if (isUpdate) {
-      // Quick update — only new number context needed
       const lastNum = nums[nums.length - 1];
-      const prevSummary = result ? `Análise anterior: status=${result.status_mesa}, confiança=${result.confianca}%.` : "";
-      userContent.push({ type: "text", text: `${prevSummary} Novo número que caiu: ${lastNum}. Histórico atualizado (mais recente por último): ${nums.join(", ")}. Total: ${nums.length} números. Atualize a análise considerando este novo número. ${contextNote}` });
+      const prevNums = nums.slice(0, -1);
+      userContent.push({ type: "text", text: `ATUALIZAÇÃO DE ANÁLISE.\n\nHistórico completo anterior (${prevNums.length} números, mais antigo primeiro): ${prevNums.join(", ")}.\n\nNOVO número que acabou de cair: ${lastNum}.\n\nHistórico completo agora (${nums.length} números): ${nums.join(", ")}.\n\nAtualize a análise levando em conta TODO o histórico acima incluindo o novo número ${lastNum}. A análise anterior indicou: status=${result?.status_mesa}, confiança=${result?.confianca}%. ${contextNote}` });
     } else if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
       userContent.push({ type: "text", text: `Analise o print da mesa acima. ${nums.length > 0 ? `Números adicionados: ${nums.join(", ")}.` : ""}${contextNote}` });
@@ -907,6 +906,8 @@ export default function RoletaIA() {
       if (parsed.numeros_identificados?.length > 0) {
         setNumbers(parsed.numeros_identificados);
       }
+      // After first analysis, clear imageBase64 so updates use full text history
+      setImageBase64(null);
     } catch (err) {
       setError("Erro: " + (err.message || JSON.stringify(err)));
     } finally {

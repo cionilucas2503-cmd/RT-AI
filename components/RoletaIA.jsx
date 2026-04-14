@@ -857,7 +857,19 @@ export default function RoletaIA() {
         })
       });
       const data = await res.json();
+
+      // Check for API errors
+      if (data.error) {
+        setError("API: " + (typeof data.error === "string" ? data.error : JSON.stringify(data.error)));
+        return;
+      }
+
       const raw = data.content?.map(b => b.text || "").join("") || "";
+      if (!raw) {
+        setError("Resposta vazia da API. Verifique a API Key.");
+        return;
+      }
+
       const clean = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       setResult(parsed);

@@ -606,51 +606,65 @@ function RouletteTable({ result }) {
     return m ? m.some(x => parseInt(x.replace(/[\[\]]/g, "")) === n) : false;
   };
 
-  const getChipColor = (n) => {
+  const getBg = (n) => {
+    if (isEvitar) return n === 0 ? "#0d2b0d" : "#1a1a1a";
+    if (n === 0) return "#1b5e20";
+    return RED_NUM.has(n) ? "#8b1010" : "#1a1a1a";
+  };
+
+  const getChip = (n) => {
     if (chipNums.includes(n)) return isCenter(n) ? "#c9a84c" : "#f0d060";
     if (gatilhoNums.includes(n)) return "#ffd740";
     return null;
   };
 
-  const getBg = (n) => {
-    if (isEvitar) return n === 0 ? "#0d2b0d" : "#111";
-    if (n === 0) return "#1b5e20";
-    return RED_NUM.has(n) ? "#7f1010" : "#141414";
-  };
+  // SVG dimensions
+  const VW = 260, VH = 670;
+  const CX = 130, R = 105;
+  const TOP_Y = 120, BOT_Y = 545;
+  const LX = 28, RX = 232;
+  const CW = 44, CH = 26;
 
-  const Cell = ({ n, w = 38, h = 27 }) => {
-    const chip = getChipColor(n);
-    const ctr = isCenter(n);
-    return (
-      <div style={{
-        width: w, height: h, background: getBg(n),
-        border: `1px solid ${chip ? chip : "#2a2a2a"}`,
-        borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: n >= 10 ? 10 : 11, fontWeight: 800, color: isEvitar ? "#2a2a2a" : "#fff",
-        fontFamily: "monospace", position: "relative", flexShrink: 0,
-        boxShadow: ctr ? `0 0 8px ${chip}` : "none"
-      }}>
-        {n}
-        {chip && <div style={{
-          position: "absolute", top: -4, right: -4, zIndex: 3,
-          width: ctr ? 10 : 8, height: ctr ? 10 : 8, borderRadius: "50%",
-          background: chip, border: "1px solid #000",
-          boxShadow: ctr ? `0 0 6px ${chip}` : "none"
-        }}/>}
-      </div>
-    );
-  };
+  // Right column: 13 cells (15→11)
+  const rightNums = [15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11];
+  // Left column: 15 cells (35→24), top to bottom
+  const leftNums  = [35, 12, 28, 7, 29, 18, 22, 9, 31, 14, 20, 1, 33, 16, 24];
 
-  // Layout matching the reference image exactly
-  const topNums    = [3, 26, 0, 32];
-  const rightNums  = [15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30];
-  const bottomNums = [8, 23, 10];
-  const leftNums   = [5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35]; // bottom→top, reversed to render top→bottom
+  const sideH = BOT_Y - TOP_Y;
+  const rStep = sideH / rightNums.length;
+  const lStep = sideH / leftNums.length;
 
-  const GAP = 2;
-  const CELL_H = 27;
-  const CELL_W = 38;
-  const centerH = leftNums.length * (CELL_H + GAP) - GAP;
+  // All positions: {n, x, y, rot}
+  const cells = [];
+
+  // Right column
+  rightNums.forEach((n, i) => cells.push({ n, x: RX, y: TOP_Y + i * rStep + rStep / 2, rot: 0 }));
+
+  // Left column
+  leftNums.forEach((n, i) => cells.push({ n, x: LX, y: TOP_Y + i * lStep + lStep / 2, rot: 0 }));
+
+  // Top arc: 3, 26, 0, 32 (angles from top, + = clockwise)
+  const toRad = d => d * Math.PI / 180;
+  [{ n: 3, a: -65 }, { n: 26, a: -30 }, { n: 0, a: 0 }, { n: 32, a: 30 }].forEach(({ n, a }) => {
+    cells.push({
+      n,
+      x: CX + R * Math.sin(toRad(a)),
+      y: TOP_Y - R * Math.cos(toRad(a)),
+      rot: a
+    });
+  });
+
+  // Bottom arc: 30, 8, 23, 10, 5 (angles from right, + = down)
+  [{ n: 30, a: 20 }, { n: 8, a: 45 }, { n: 23, a: 90 }, { n: 10, a: 135 }, { n: 5, a: 160 }].forEach(({ n, a }) => {
+    cells.push({
+      n,
+      x: CX + R * Math.cos(toRad(a)),
+      y: BOT_Y + R * Math.sin(toRad(a)),
+      rot: a - 90
+    });
+  });
+
+  const pillPath = `M ${CX-R} ${TOP_Y} A ${R} ${R} 0 0 1 ${CX+R} ${TOP_Y} L ${CX+R} ${BOT_Y} A ${R} ${R} 0 0 1 ${CX-R} ${BOT_Y} Z`;
 
   return (
     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 14, marginBottom: 14 }}>
@@ -664,78 +678,77 @@ function RouletteTable({ result }) {
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: GAP }}>
+      <div style={{ display: "flex", justifyContent: "center", filter: isEvitar ? "grayscale(0.8) brightness(0.45)" : "none" }}>
+        <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" style={{ maxWidth: 280 }}>
 
-        {/* TOP: 3 - 26 - 0 - 32 */}
-        <div style={{ display: "flex", gap: GAP }}>
-          {topNums.map(n => <Cell key={n} n={n} w={n === 0 ? 50 : CELL_W} h={26} />)}
-        </div>
+          {/* Pill background */}
+          <path d={pillPath} fill="#080b0f" stroke="#1a1a1a" strokeWidth="1"/>
 
-        {/* MIDDLE: left column + center labels + right column */}
-        <div style={{ display: "flex", gap: GAP, alignItems: "flex-start" }}>
+          {/* Sector dividers */}
+          {[245, 350, 450].map(y => (
+            <line key={y} x1={CX-R+12} y1={y} x2={CX+R-12} y2={y} stroke="#111" strokeWidth="1"/>
+          ))}
 
-          {/* LEFT (35 at top → 5 at bottom) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
-            {[...leftNums].reverse().map(n => <Cell key={n} n={n} w={CELL_W} h={CELL_H} />)}
-          </div>
+          {/* Sector labels */}
+          {[
+            { label: "Zero",      y: 182 },
+            { label: "Voisins",   y: 297 },
+            { label: "Orphelins", y: 400 },
+            { label: "Tier",      y: 490 },
+          ].map(s => (
+            <text key={s.label} x={CX} y={s.y} textAnchor="middle" dominantBaseline="middle"
+              fontSize="15" fill="#252535" fontStyle="italic" style={{ fontFamily: "serif" }}>
+              {s.label}
+            </text>
+          ))}
 
-          {/* CENTER with sector labels */}
-          <div style={{
-            width: 130, height: centerH, background: "#060a0e",
-            border: "1px solid #111", borderRadius: 4,
-            display: "flex", flexDirection: "column",
-            justifyContent: "space-around", alignItems: "center",
-            padding: "10px 4px", gap: 0
-          }}>
-            {[
-              { label: "Zero",      border: true  },
-              { label: "Voisins",   border: true  },
-              { label: "Orphelins", border: true  },
-              { label: "Tier",      border: false },
-            ].map(({ label, border }) => (
-              <div key={label} style={{
-                width: "100%", textAlign: "center",
-                fontSize: 13, color: "#3a3a50",
-                fontFamily: "serif", fontStyle: "italic",
-                paddingBottom: border ? 8 : 0,
-                borderBottom: border ? "1px solid #111" : "none"
-              }}>{label}</div>
-            ))}
-          </div>
-
-          {/* RIGHT (15 at top → 30 at bottom) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
-            {rightNums.map(n => <Cell key={n} n={n} w={CELL_W} h={CELL_H} />)}
-          </div>
-        </div>
-
-        {/* BOTTOM: 8 - 23 - 10 */}
-        <div style={{ display: "flex", gap: GAP }}>
-          {bottomNums.map(n => <Cell key={n} n={n} w={CELL_W} h={26} />)}
-        </div>
+          {/* Number cells */}
+          {cells.map(({ n, x, y, rot }) => {
+            const chip = getChip(n);
+            const ctr = isCenter(n);
+            return (
+              <g key={n} transform={`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${rot})`}>
+                <rect x={-CW/2} y={-CH/2} width={CW} height={CH} rx={4} ry={4}
+                  fill={getBg(n)}
+                  stroke={chip ? chip : "#222"}
+                  strokeWidth={chip ? (ctr ? 2 : 1.5) : 0.5}
+                />
+                <text x={0} y={0.5} textAnchor="middle" dominantBaseline="middle"
+                  fontSize={n >= 10 ? "10" : "11"} fontWeight="800"
+                  fill={isEvitar ? "#2a2a2a" : "#fff"}
+                  style={{ fontFamily: "monospace" }}>
+                  {n}
+                </text>
+                {chip && (
+                  <circle cx={CW/2 - 4} cy={-(CH/2) + 4} r={ctr ? 5 : 4}
+                    fill={chip} stroke="#000" strokeWidth="0.5"
+                  />
+                )}
+              </g>
+            );
+          })}
+        </svg>
       </div>
 
       {/* Legend */}
-      <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
-        {isBoa && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c" }} />
-              <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>CENTRAL</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f0d060" }} />
-              <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>VIZINHOS</span>
-            </div>
-          </>
-        )}
+      <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        {isBoa && <>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c" }}/>
+            <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>CENTRAL</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f0d060" }}/>
+            <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>VIZINHOS</span>
+          </div>
+        </>}
         {isAguardar && (
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd740" }} />
-            <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>GATILHO A AGUARDAR</span>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffd740" }}/>
+            <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>GATILHO</span>
           </div>
         )}
-        {isEvitar && <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>MESA SEM PADRÃO — NÃO JOGAR</span>}
+        {isEvitar && <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>MESA SEM PADRÃO</span>}
       </div>
     </div>
   );

@@ -226,20 +226,26 @@ LÓGICA DE ENTRADA CORRETA:
 Para o mesmo histórico de números, a análise DEVE ser sempre idêntica.
 Aplique as regras matematicamente, sem variação.
 
-## GATILHO DE ENTRADA:
-Só indique gatilho quando confiança ≥ 60%. O gatilho deve ser específico:
-- Qual estratégia acionar
-- Em quais números/grupos apostar
-- Se esperar mais 1 jogada de confirmação ou entrar agora
+## REGRAS DE ANÁLISE — OBRIGATÓRIAS:
+
+⚠️ NUNCA retorne instruções genéricas de "como analisar". SEMPRE faça a análise você mesma e retorne os resultados concretos.
+⚠️ O campo "gatilho" deve conter O QUE VOCÊ ENCONTROU na análise, nunca o que o usuário deveria fazer.
+⚠️ Exemplos CORRETOS para o campo "gatilho":
+   - "G26 ativou alvo 33. Terminal 3 com 4 ocorrências confirma. Entrar agora no 33."
+   - "Últimos 3 números ativaram alvos convergentes em 27 e 9. Voisins dominando. Apostar no 27."
+   - "Setor Tier dominante (5/10 jogadas). NSP: G11 → 30. Convergência forte. Apostar no 30."
+⚠️ Exemplos ERRADOS (NUNCA faça isso):
+   - "Identifique os últimos 3 gatilhos e cruze com as estratégias..."
+   - "Verifique se algum número ativa o NSP..."
+   - "Analise os terminais e veja qual está aquecido..."
+
+## SE RECEBER UMA IMAGEM:
+Leia TODOS os números visíveis na tela do cassino (bolinhas coloridas). Extraia os últimos 20 números (do mais recente para o mais antigo) e aplique TODA a análise automaticamente. Retorne os números identificados no campo "numeros_identificados".
 
 ## GESTÃO DE BANCA (Flat Bet):
 - Stop Gain do dia: +20% da banca
 - Stop Loss do dia: -10% da banca
 - Stop por sequência: pare após 3 perdas consecutivas independente do saldo
-- Retome apenas após identificar novo padrão claro
-
-## SE RECEBER UMA IMAGEM:
-Leia o histórico de números visível na tela do cassino (geralmente aparecem em bolinhas coloridas). Extraia os números e aplique toda a análise.
 
 ## FORMATO DE RESPOSTA (JSON PURO, sem markdown):
 {
@@ -247,16 +253,16 @@ Leia o histórico de números visível na tela do cassino (geralmente aparecem e
   "confianca": número 0-100,
   "numeros_identificados": [lista de números se vier de imagem, senão null],
   "estrategias": {
-    "terminal_simples": {"ativo": bool, "descricao": "texto curto", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
-    "terminal_camuflado": {"ativo": bool, "descricao": "texto curto", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
-    "setores": {"ativo": bool, "descricao": "texto curto", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
-    "padroes": {"ativo": bool, "descricao": "texto curto", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
-    "duzias": {"ativo": bool, "descricao": "texto curto", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
-    "paridade": {"ativo": bool, "descricao": "texto curto", "forca": "FORTE|MEDIO|FRACO|INATIVO"}
+    "terminal_simples": {"ativo": bool, "descricao": "Terminal X apareceu N vezes", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
+    "terminal_camuflado": {"ativo": bool, "descricao": "Terminal X camuflado: N vizinhos diretos", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
+    "setores": {"ativo": bool, "descricao": "Setor X: N/10 números", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
+    "padroes": {"ativo": bool, "descricao": "padrão identificado concretamente", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
+    "duzias": {"ativo": bool, "descricao": "Xª Dúzia: N ocorrências em 15", "forca": "FORTE|MEDIO|FRACO|INATIVO"},
+    "paridade": {"ativo": bool, "descricao": "X pares / Y ímpares em 10", "forca": "FORTE|MEDIO|FRACO|INATIVO"}
   },
-  "analise_completa": "Análise detalhada em português como uma especialista experiente falaria...",
-  "gatilho": "Instrução clara de entrada OU null se não houver",
-  "apostar_em": "Números ou grupos específicos OU null",
+  "analise_completa": "Explique O QUE VOCÊ ENCONTROU: quais terminais contou, quais gatilhos NSP foram ativados, quais alvos convergiram, como chegou à confiança. Fale como especialista que já fez a análise.",
+  "gatilho": "O QUE VOCÊ IDENTIFICOU como jogada. Ex: 'G7 ativou 27 e 9. Setor Voisins dominante. Apostar no 27 com 3 fichas de proteção.' OU null se não houver sinal forte.",
+  "apostar_em": "A-B-C-[NUMERO_CENTRAL]-D-E-F (formato com vizinhos da roda) OU null",
   "alerta": "Aviso importante se houver OU null"
 }`;
 
@@ -875,7 +881,7 @@ export default function RoletaIA() {
     const customBlock = customStrategies.filter(s => activeStrategies.has(s.id)).map(s =>
       `\n### ESTRATÉGIA PERSONALIZADA: ${s.title}\n${s.description}`
     ).join("\n");
-    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}\nRetorne apenas o JSON.`;
+    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}\nFAÇA A ANÁLISE COMPLETA e retorne apenas o JSON com os resultados concretos — nunca instruções genéricas.`;
 
     const userContent = [];
 
@@ -885,7 +891,7 @@ export default function RoletaIA() {
       userContent.push({ type: "text", text: `ATUALIZAÇÃO DE ANÁLISE.\n\nHistórico completo anterior (${prevNums.length} números, mais antigo primeiro): ${prevNums.join(", ")}.\n\nNOVO número que acabou de cair: ${lastNum}.\n\nHistórico completo agora (${nums.length} números): ${nums.join(", ")}.\n\nAtualize a análise levando em conta TODO o histórico acima incluindo o novo número ${lastNum}. A análise anterior indicou: status=${result?.status_mesa}, confiança=${result?.confianca}%. ${contextNote}` });
     } else if (imageBase64) {
       userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
-      userContent.push({ type: "text", text: `Analise o print da mesa acima. ${nums.length > 0 ? `Números adicionados: ${nums.join(", ")}.` : ""}${contextNote}` });
+      userContent.push({ type: "text", text: `Leia os últimos 20 números visíveis neste print do cassino (bolinhas coloridas, do mais recente para o mais antigo). Faça a análise completa de todas as estratégias e retorne os resultados concretos — qual número apostar e por quê. ${nums.length > 0 ? `Números adicionados manualmente: ${nums.join(", ")}.` : ""}${contextNote}` });
     } else {
       userContent.push({ type: "text", text: `Histórico da mesa (mais antiga para mais recente): ${nums.join(", ")}. Total: ${nums.length} números.${contextNote}` });
     }

@@ -659,6 +659,7 @@ export default function RoletaIA() {
   const [numbers, setNumbers] = useState([]);
   const [inputVal, setInputVal] = useState("");
   const [imageBase64, setImageBase64] = useState(null);
+  const fileInputRef = useRef(null);
   const [imageMediaType, setImageMediaType] = useState("image/png");
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -741,42 +742,47 @@ export default function RoletaIA() {
   function handleImage(e) {
     const file = e.target.files[0];
     if (!file) return;
-    // Nova imagem = zerar estado anterior para forcar releitura completa
+    // Resetar o input para garantir que o mesmo arquivo possa ser selecionado novamente
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Zerar todo estado anterior
     setNumbers([]);
     setResult(null);
     setPrevBetNums([]);
     setError(null);
+    setImageBase64(null);
+    setImagePreview(null);
     const mimeType = file.type || "image/jpeg";
     setImageMediaType(mimeType);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target.result;
       setImagePreview(dataUrl);
-      // Resize via canvas for optimal AI reading quality
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        // Keep original resolution up to 2000px wide for clarity
         const maxW = 2000;
         const scale = img.width > maxW ? maxW / img.width : 1;
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // Use PNG for screenshots (lossless = numbers are readable)
         const optimized = canvas.toDataURL("image/png");
-        setImageBase64(optimized.split(",")[1]);
+        const b64 = optimized.split(",")[1];
+        setImageBase64(b64);
         setImageMediaType("image/png");
+        // Auto-analisar assim que a imagem estiver pronta
+        setTimeout(() => runAnalysis([], b64), 100);
       };
       img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }
 
-  async function runAnalysis(updatedNumbers) {
+  async function runAnalysis(updatedNumbers, imageOverride) {
     const nums = updatedNumbers || numbers;
-    const isUpdate = false; // Every analysis is now a fresh full analysis
-    if (nums.length < 10 && !imageBase64) {
+    const imgB64 = imageOverride || imageBase64;
+    const isUpdate = false;
+    if (nums.length < 10 && !imgB64) {
       setError("Adicione pelo menos 10 números ou envie um print da mesa.");
       return;
     }
@@ -794,8 +800,8 @@ export default function RoletaIA() {
 
     const userContent = [];
 
-    if (imageBase64) {
-      userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imageBase64 } });
+    if (imgB64) {
+      userContent.push({ type: "image", source: { type: "base64", media_type: imageMediaType || "image/png", data: imgB64 } });
       userContent.push({ type: "text", text: `LEITURA DO PRINT DE ROLETA — PRIMEIRA LINHA APENAS:
 
 Leia SOMENTE os 10 números da PRIMEIRA LINHA da grade (esquerda → direita).
@@ -986,6 +992,7 @@ ${contextNote}` });
                 </label>
               )}
               <input
+                ref={fileInputRef}
                 id="imgUpload"
                 type="file"
                 accept="image/*"

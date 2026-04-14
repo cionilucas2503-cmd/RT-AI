@@ -704,7 +704,7 @@ function RouletteTable({ result }) {
   return (
     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 16, padding: 14, marginBottom: 14 }}>
       <div style={{ fontSize: 10, color: isEvitar ? "#4a5568" : isAguardar ? "#ffd740" : "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>
-        {isEvitar ? "🚫 MESA INATIVA" : isAguardar ? "⏭️ AGUARDAR ESTES GATILHOS" : "🎯 COLOQUE AS FICHAS AQUI"}
+        {isEvitar ? "🚫 MESA INATIVA" : isAguardar ? "📍 AONDE COLOCAR SUAS FICHAS" : "🎯 COLOQUE AS FICHAS AQUI"}
       </div>
 
       {isAguardar && result.gatilho && (
@@ -1234,8 +1234,8 @@ Faça a análise completa com esses 20 números e indique qual número apostar. 
                   </div>
                 </div>
 
-                {/* 2. GATILHO — último número que saiu, verifica se ativa estratégias */}
-                {numbers.length > 0 && (() => {
+                {/* 2. GATILHO — só aparece quando status é BOA (verde) */}
+                {numbers.length > 0 && result?.status_mesa === "BOA" && (() => {
                   const lastNum = numbers[numbers.length - 1];
                   const bgLast = lastNum === 0 ? "#1b5e20" : RED_NUMBERS.has(lastNum) ? "#b71c1c" : "#1a1a1a";
                   const nspData = NUMEROS_QUE_SE_PUXAM[lastNum] || [];

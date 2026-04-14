@@ -15,46 +15,56 @@ export default async function handler(req, res) {
   try {
     const { system, messages, max_tokens } = req.body;
 
+    // Try models from most to least capable
     const models = [
       "claude-3-5-sonnet-20241022",
-      "claude-3-5-haiku-20241022",
+      "claude-3-sonnet-20240229",
       "claude-3-haiku-20240307"
     ];
 
-    let lastError = null;
-
     for (const model of models) {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: max_tokens || 2000,
-          temperature: 0,        // DETERMINÍSTICO — mesma entrada = mesma saída sempre
-          system: system || "",
-          messages: messages || []
-        })
-      });
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: max_tokens || 2000,
+            temperature: 0,
+            system: system || "",
+            messages: messages || []
+          })
+        });
 
-      const text = await response.text();
-      let parsed;
-      try { parsed = JSON.parse(text); } catch(e) { continue; }
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch(e) { continue; }
 
-      if (response.ok) return res.status(200).json({ ...parsed, _model_used: model });
+        if (response.ok) {
+          return res.status(200).json({ ...data, _model: model });
+        }
 
-      if (parsed.error?.type === "not_found_error" || parsed.error?.message?.includes("model")) {
-        lastError = parsed.error?.message;
+        // If model not available, try next one
+        const errMsg = data?.error?.message || "";
+        const errType = data?.error?.type || "";
+        if (errType === "not_found_error" || errMsg.includes("model") || errMsg.includes("not found")) {
+          continue;
+        }
+
+        // Other error — return it
+        return res.status(response.status).json({ error: errMsg || "API error" });
+
+      } catch(e) {
         continue;
       }
-
-      return res.status(response.status).json({ error: parsed.error?.message || "API error" });
     }
 
-    res.status(500).json({ error: "Nenhum modelo disponível: " + lastError });
+    res.status(500).json({ error: "Nenhum modelo disponível. Verifique a API Key." });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

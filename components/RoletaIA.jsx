@@ -1244,17 +1244,66 @@ export default function RoletaIA() {
                   );
                 })()}
 
-                {/* 4. ALERTA */}
+                {/* 4. NÚMEROS DA JOGADA — faixa com central azul + 3 vizinhos amarelos */}
+                {result.apostar_em && (() => {
+                  const cm = result.apostar_em.match(/\[(\d+)\]/g) || [];
+                  const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  if (cn.length === 0) return null;
+                  return (
+                    <div style={{ background: "#0d1118", border: "1px solid #1e90ff30", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#1e90ff", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>
+                        🎲 NÚMEROS DA JOGADA
+                      </div>
+                      {cn.map((centerNum, idx) => {
+                        const bet = getWheelBet(centerNum, 3);
+                        return (
+                          <div key={idx} style={{ marginBottom: idx < cn.length - 1 ? 12 : 0 }}>
+                            <div style={{ display: "flex", gap: 5, justifyContent: "center", alignItems: "center" }}>
+                              {bet.all.map((num, i) => {
+                                const isC = num === centerNum;
+                                const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                                return (
+                                  <div key={i} style={{
+                                    width: isC ? 46 : 36, height: isC ? 46 : 36,
+                                    borderRadius: "50%",
+                                    background: bg,
+                                    border: `2px solid ${isC ? "#1e90ff" : "#f0d060"}`,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: isC ? 15 : 11, fontWeight: 900, color: "#fff",
+                                    fontFamily: "monospace", flexShrink: 0,
+                                    boxShadow: isC ? "0 0 14px rgba(30,144,255,0.55)" : "none",
+                                  }}>{num}</div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#1e90ff" }} />
+                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>CENTRAL</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#f0d060" }} />
+                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>VIZINHOS ±3</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 5. ALERTA */}
                 {result.alerta && (
                   <div style={{ background: "rgba(255,61,87,0.08)", border: "1px solid rgba(255,61,87,0.3)", borderRadius: 12, padding: "12px 16px", marginBottom: 14, fontSize: 13, color: "#ff6b7a", lineHeight: 1.6 }}>
                     ⚠️ {result.alerta}
                   </div>
                 )}
 
-                {/* 5. MESA VISUAL */}
+                {/* 6. MESA VISUAL */}
                 <RouletteTable result={result} />
 
-                {/* 6. DETALHES */}
+                {/* 7. DETALHES */}
                 <details style={{ marginBottom: 14 }}>
                   <summary style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 12, padding: "12px 16px", fontSize: 11, color: "#4a5568", fontFamily: "monospace", letterSpacing: 2, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
                     <span>📊 VER ANÁLISE DETALHADA</span><span>›</span>

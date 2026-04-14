@@ -7,39 +7,56 @@ export default async function handler(req, res) {
   try {
     const { system, messages, max_tokens } = req.body;
 
-    const payload = {
-      model: "claude-3-haiku-20240307",
-      max_tokens: max_tokens || 1500,
-      system: system || "",
-      messages: messages || []
-    };
+    // Try models in order from best to most compatible
+    const models = [
+      "claude-opus-4-5-20251101",
+      "claude-sonnet-4-5-20251022", 
+      "claude-3-5-sonnet-20241022",
+      "claude-3-opus-20240229"
+    ];
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify(payload)
-    });
+    let data = null;
+    let lastError = null;
 
-    const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch(e) {
-      return res.status(500).json({ error: "Invalid JSON", raw: text.slice(0, 300) });
-    }
+    for (const model of models) {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: max_tokens || 2000,
+          system: system || "",
+          messages: messages || []
+        })
+      });
 
-    if (!response.ok) {
+      const text = await response.text();
+      let parsed;
+      try { parsed = JSON.parse(text); } catch(e) { continue; }
+
+      if (response.ok) {
+        // Success — return with model info
+        return res.status(200).json({ ...parsed, _model_used: model });
+      }
+
+      // If model not found, try next
+      if (parsed.error?.type === "not_found_error" || parsed.error?.message?.includes("model")) {
+        lastError = parsed.error?.message;
+        continue;
+      }
+
+      // Other error — return immediately
       return res.status(response.status).json({ 
-        error: data.error?.message || "API error",
-        type: data.error?.type
+        error: parsed.error?.message || "API error",
+        type: parsed.error?.type
       });
     }
 
-    res.status(200).json(data);
+    res.status(500).json({ error: "No model available: " + lastError });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -244,19 +244,21 @@ LEITURA OBRIGATÓRIA: Os números no print do cassino são exibidos em grade, li
 O número do CANTO SUPERIOR ESQUERDO é o MAIS RECENTE (último que saiu).
 Os números seguintes (leitura normal) são os anteriores em ordem cronológica inversa.
 
-PROCEDIMENTO OBRIGATÓRIO:
-1. Leia os números da grade do cassino: esquerda→direita, cima→baixo
-2. O número do CANTO SUPERIOR ESQUERDO = o MAIS RECENTE (último sorteado)
-3. Os seguintes em ordem de leitura = progressivamente mais antigos
-4. Extraia os 20 primeiros números lidos = janela de análise
-5. Em "numeros_identificados" coloque do MAIS RECENTE para o MAIS ANTIGO
-6. Aplique TODA a análise com esses 20 números
+PROCEDIMENTO OBRIGATÓRIO — SIGA EXATAMENTE:
+1. O número do CANTO SUPERIOR ESQUERDO da grade = ÚLTIMO que a roleta sorteou (mais recente)
+2. Lendo da esquerda→direita, linha a linha de cima→baixo: cada número seguinte é progressivamente MAIS ANTIGO
+3. Extraia os primeiros 20 números nessa ordem = janela de análise
+4. No JSON: "numeros_identificados" = [mais recente, ..., mais antigo] (mesma ordem da leitura)
+5. O GATILHO para análise NSP = sempre o PRIMEIRO número do array (canto superior esquerdo = mais recente)
 
-EXEMPLO CONCRETO: Print mostra grade começando com [2, 8, 13, 16, 18, 32, 10, 15, 1, 21, 30, 35, 7, 24, 32, 4, 34, 29, ...]
-→ 2 = MAIS RECENTE (foi o último a sair)
-→ 8 = penúltimo, 13 = antepenúltimo, e assim por diante
+EXEMPLO DO PRINT (grade começa com):
+  Linha 1: 2  8  13  16  18  32  10  15  1
+  Linha 2: 21 30  35   7  24  32   4  34  29
+→ 2 = MAIS RECENTE (último sorteado pela roleta)
+→ 8 = penúltimo | 13 = antepenúltimo | 16, 18, 32, 10... = anteriores
 → numeros_identificados = [2, 8, 13, 16, 18, 32, 10, 15, 1, 21, 30, 35, 7, 24, 32, 4, 34, 29, ...]
-→ O gatilho atual para NSP = 2 (o mais recente)
+→ Gatilho NSP = 2 | Histórico = os 19 seguintes
+→ NUNCA inverta a ordem, NUNCA comece pelo mais antigo
 
 ## GESTÃO DE BANCA (Flat Bet):
 - Stop Gain do dia: +20% da banca
@@ -863,7 +865,9 @@ export default function RoletaIA() {
       setTimeout(() => setShowWin(false), 3000);
     }
     setNumbers(prev => {
-      const updated = [...prev, v];
+      // Rolling window: keep last 20 for AI analysis, display shows last 7
+      const full = [...prev, v];
+      const updated = full.length > 20 ? full.slice(-20) : full;
       if (autoAnalyze || result) {
         setTimeout(() => runAnalysis(updated), 100);
       }
@@ -915,7 +919,7 @@ export default function RoletaIA() {
       userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
       userContent.push({ type: "text", text: `Leia os últimos 20 números visíveis neste print do cassino (bolinhas coloridas, do mais recente para o mais antigo). Faça a análise completa de todas as estratégias e retorne os resultados concretos — qual número apostar e por quê. ${nums.length > 0 ? `Números adicionados manualmente: ${nums.join(", ")}.` : ""}${contextNote}` });
     } else {
-      userContent.push({ type: "text", text: `Histórico da mesa (mais antiga para mais recente): ${nums.join(", ")}. Total: ${nums.length} números.${contextNote}` });
+      userContent.push({ type: "text", text: `Histórico dos últimos ${nums.length} números (do MAIS RECENTE para o MAIS ANTIGO): ${[...nums].reverse().join(", ")}. O MAIS RECENTE = ${nums[nums.length-1]} = gatilho atual para análise NSP.${contextNote}` });
     }
 
     try {

@@ -143,10 +143,10 @@ Stop Gain: +20% | Stop Loss: -10% | Stop sequência: 3 perdas consecutivas
     "ausencia": {"ativo": bool, "descricao": "...", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_ou_null},
     "numeros_puxam": {"ativo": bool, "descricao": "...", "forca": "FORTE|MEDIO|FRACO|INATIVO", "alvo": número_ou_null}
   },
-  "numero_gatilho": número confirmado (último) ou número futuro aguardado,
-  "gatilho_confirmado": true | false,
-  "gatilho_descricao": "Ex: '23 saiu, confirmou Dupla B — apostar em 13±3' OU 'Aguardando X para confirmar Dupla A'",
-  "apostar_em": "A-B-C-[CENTRO]-D-E-F ou null",
+  "numero_gatilho": o último número inserido pelo usuário (sempre o mais recente do histórico),
+  "gatilho_confirmado": true se dupla ativa com 2+ estratégias FORTES convergindo | false caso contrário,
+  "gatilho_descricao": "Descreva qual dupla está ativa e qual é o número alvo. Ex: 'Dupla B ativa — Terminal 3 + 2ª Dúzia convergem para o alvo 23'",
+  "apostar_em": "OBRIGATÓRIO quando BOA: use exatamente o formato A-B-C-[ALVO]-D-E-F onde [ALVO] é o número-alvo da dupla ativa (o mesmo número descrito no gatilho_descricao). Este número deve ser o alvo confirmado pelas estratégias convergentes.",
   "analise_completa": "Análise detalhada das 2 etapas + bônus NSP explicando o raciocínio",
   "alerta": "Aviso importante ou null"
 }`;
@@ -1200,27 +1200,48 @@ ${contextNote}` });
                   );
                   const lastNum = numbers[numbers.length - 1];
                   const bgLast = lastNum === 0 ? "#1b5e20" : RED_NUMBERS.has(lastNum) ? "#b71c1c" : "#1a1a1a";
-                  const nspData = NUMEROS_QUE_SE_PUXAM[lastNum] || [];
+                  // Número alvo da dupla (extraído do apostar_em)
+                  const alvoMatch = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/) || []) : [];
+                  const alvoNum = alvoMatch[1] != null ? parseInt(alvoMatch[1]) : null;
+                  const bgAlvo = alvoNum == null ? "#1a1a1a" : alvoNum === 0 ? "#1b5e20" : RED_NUMBERS.has(alvoNum) ? "#b71c1c" : "#1a1a1a";
                   const nspForca = result?.estrategias?.numeros_puxam?.forca;
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #c9a84c60", borderRadius: 16, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>{result?.gatilho_confirmado ? "🎯 GATILHO CONFIRMADO" : "⏳ AGUARDE ESTE NÚMERO"}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{
-                          width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
-                          background: bgLast,
-                          border: "3px solid #c9a84c",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "monospace",
-                          boxShadow: "0 0 20px rgba(201,168,76,0.55)"
-                        }}>{lastNum}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        {/* Último número inserido */}
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                          <div style={{ fontSize: 8, color: "#4a5568", fontFamily: "monospace", letterSpacing: 1 }}>SAIU</div>
+                          <div style={{
+                            width: 52, height: 52, borderRadius: "50%", flexShrink: 0,
+                            background: bgLast,
+                            border: "2px solid #c9a84c80",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                          }}>{lastNum}</div>
+                        </div>
+                        <div style={{ fontSize: 18, color: "#4a5568" }}>→</div>
+                        {/* Número alvo */}
+                        {alvoNum != null && (
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                            <div style={{ fontSize: 8, color: "#00e676", fontFamily: "monospace", letterSpacing: 1 }}>APOSTAR</div>
+                            <div style={{
+                              width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
+                              background: bgAlvo,
+                              border: "3px solid #00e676",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "monospace",
+                              boxShadow: "0 0 20px rgba(0,230,118,0.45)"
+                            }}>{alvoNum}</div>
+                          </div>
+                        )}
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 12, color: "#c9a84c", fontFamily: "monospace", fontWeight: 700, marginBottom: 4 }}>
                             {result.dupla_descricao || result.estrategia_principal} — {result.confianca}%
                           </div>
-                          {result.nsp_validacao && (
-                            <div style={{ fontSize: 10, color: result.nsp_validacao === "NAO_CONFIRMA" ? "#ff6b7a" : "#00e676", fontFamily: "monospace", marginBottom: 4 }}>
-                              NSP: {result.nsp_validacao === "FORTE" ? "✅ FORTE" : result.nsp_validacao === "CONFIRMA" ? "✅ CONFIRMA" : "❌ NÃO CONFIRMA"}
+                          {result.nsp_descricao && (
+                            <div style={{ fontSize: 10, color: "#7a6a3a", fontFamily: "monospace", marginBottom: 4 }}>
+                              {result.nsp_descricao}
                             </div>
                           )}
                           {result.gatilho_descricao && (

@@ -7,6 +7,17 @@ function getNumColor(n) {
   return RED_NUMBERS.has(n) ? "red" : "black";
 }
 
+// Extrai número(s) alvo do campo apostar_em da IA
+// Tenta [N] primeiro, depois qualquer número 0-36 no texto
+function extractAlvos(apostar_em) {
+  if (!apostar_em) return [];
+  const bracket = (apostar_em.match(/\[(\d+)\]/g) || []).map(m => parseInt(m.replace(/[\[\]]/g, "")));
+  if (bracket.length > 0) return bracket;
+  // Fallback: todos os números 0-36 no texto
+  const all = (apostar_em.match(/(\d{1,2})/g) || []).map(Number).filter(n => n >= 0 && n <= 36);
+  return [...new Set(all)];
+}
+
 const SYSTEM_PROMPT = `Você é ARIA — Analista de Roleta IA. Especialista em padrões da roleta europeia.
 
 ## CONCEITO FUNDAMENTAL
@@ -502,9 +513,7 @@ function RouletteTable({ result, nspAlvoNum, nspAlvoNums = [] }) {
 
   // Chip numbers ONLY when status is BOA — compute ±3 from WHEEL (not from apostar_em text)
   // This ensures correct roulette positions regardless of how AI writes the apostar_em string
-  const mainCenterNums = isBoa && result.apostar_em
-    ? (result.apostar_em.match(/\[(\d+)\]/g) || []).map(m => parseInt(m.replace(/[\[\]]/g, "")))
-    : [];
+  const mainCenterNums = isBoa ? extractAlvos(result.apostar_em) : [];
   const mainChipNums = mainCenterNums.flatMap(n => getWheelBet(n, 3).all);
   const nspChipNums = isBoa
     ? nspAlvoNums.flatMap(n => getWheelBet(n, 3).all) : [];
@@ -512,10 +521,7 @@ function RouletteTable({ result, nspAlvoNum, nspAlvoNums = [] }) {
   const gatilhoNums = [];  // nunca destaca gatilhos — jogada só quando verde
 
   const isCenter = (n) => {
-    // Main analysis centrals
-    const m = result.apostar_em?.match(/\[(\d+)\]/g) || [];
-    if (m.some(x => parseInt(x.replace(/[\[\]]/g, "")) === n)) return true;
-    // NSP alvo central
+    if (extractAlvos(result.apostar_em).includes(n)) return true;
     if (nspAlvoNums.includes(n)) return true;
     return false;
   };
@@ -917,8 +923,7 @@ ${contextNote}` });
       setResult(parsed);
       // Salvar números da aposta atual para comparar na próxima jogada
       if (parsed.apostar_em) {
-        const cm = parsed.apostar_em.match(/\[(\d+)\]/g) || [];
-        const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+        const cn = extractAlvos(parsed.apostar_em);
         const betNums = cn.flatMap(num => getWheelBet(num, 3).all);
         setPrevBetNums(betNums);
       } else {
@@ -950,18 +955,10 @@ ${contextNote}` });
     }
   }
 
-  // Alvo da dupla — extraído do apostar_em (ex: "X-Y-[28]-Z-W" → 28)
-  // Tenta [N] primeiro, depois qualquer número válido no string
-  const alvoNum = (() => {
-    if (!result?.apostar_em) return null;
-    const bracketMatch = result.apostar_em.match(/\[(\d+)\]/);
-    if (bracketMatch) return parseInt(bracketMatch[1]);
-    // Fallback: primeiro número 0-36 encontrado no apostar_em
-    const anyMatch = result.apostar_em.match(/\b(\d{1,2})\b/g) || [];
-    const valid = anyMatch.map(Number).filter(n => n >= 0 && n <= 36);
-    return valid.length > 0 ? valid[0] : null;
-  })();
-  const nspAlvoNums = alvoNum != null ? [alvoNum] : [];
+  // Alvo da dupla — usa extractAlvos() centralizado
+  const _alvos = extractAlvos(result?.apostar_em);
+  const alvoNum = _alvos.length > 0 ? _alvos[0] : null;
+  const nspAlvoNums = _alvos.length > 0 ? _alvos : [];
   const nspAlvoNum = alvoNum;
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
@@ -1264,8 +1261,7 @@ ${contextNote}` });
 
                 {/* 3. JOGADA INDICADA — somente quando BOA (verde) */}
                 {result.status_mesa === "BOA" && result.gatilho && (() => {
-                  const cm = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/g) || []) : [];
-                  const cn = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  const cn = extractAlvos(result.apostar_em);
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #1e90ff40", borderRadius: 14, padding: "12px 16px", marginBottom: 14 }}>
                       <div style={{ fontSize: 10, color: "#1e90ff", letterSpacing: 3, fontFamily: "monospace", marginBottom: 8 }}>🎯 JOGADA INDICADA</div>
@@ -1348,15 +1344,8 @@ ${contextNote}` });
                     </div>
                   );
 
-                  // Número alvo da dupla (centro da aposta) — extraído do apostar_em
-                  // Tenta [N] primeiro, depois qualquer número isolado no string
-                  const cmBracket = result.apostar_em.match(/\[(\d+)\]/g) || [];
-                  let alvoNumbers = cmBracket.map(m => parseInt(m.replace(/[\[\]]/g, "")));
-                  if (alvoNumbers.length === 0) {
-                    // Fallback: pega todos os números no apostar_em
-                    const cmAny = result.apostar_em.match(/\b(\d{1,2})\b/g) || [];
-                    alvoNumbers = [...new Set(cmAny.map(Number).filter(n => n >= 0 && n <= 36))];
-                  }
+                  // Número alvo da dupla — usa extractAlvos() centralizado
+                  const alvoNumbers = extractAlvos(result.apostar_em);
 
                   if (alvoNumbers.length === 0) return (
                     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>

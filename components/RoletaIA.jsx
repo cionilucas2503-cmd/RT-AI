@@ -146,7 +146,7 @@ Stop Gain: +20% | Stop Loss: -10% | Stop sequência: 3 perdas consecutivas
   "numero_gatilho": o último número inserido pelo usuário (sempre o mais recente do histórico),
   "gatilho_confirmado": true se dupla ativa com 2+ estratégias FORTES convergindo | false caso contrário,
   "gatilho_descricao": "Descreva qual dupla está ativa e qual é o número alvo. Ex: 'Dupla B ativa — Terminal 3 + 2ª Dúzia convergem para o alvo 23'",
-  "apostar_em": "OBRIGATÓRIO quando BOA: use exatamente o formato A-B-C-[ALVO]-D-E-F onde [ALVO] é o número-alvo da dupla ativa (o mesmo número descrito no gatilho_descricao). Este número deve ser o alvo confirmado pelas estratégias convergentes.",
+  "apostar_em": "OBRIGATÓRIO quando status_mesa=BOA. Formato EXATO: coloque o número-alvo entre colchetes assim: [28] — exemplo completo: '25-12-[28]-9-7'. O número entre [colchetes] É O ALVO DA DUPLA, o mesmo mencionado em dupla_descricao e gatilho_descricao. NUNCA omita os colchetes. NUNCA retorne null quando BOA.",
   "analise_completa": "Análise detalhada das 2 etapas + bônus NSP explicando o raciocínio",
   "alerta": "Aviso importante ou null"
 }`;
@@ -951,9 +951,16 @@ ${contextNote}` });
   }
 
   // Alvo da dupla — extraído do apostar_em (ex: "X-Y-[28]-Z-W" → 28)
-  // Este é o número central que a IA indicou para apostar
-  const alvoMatch = result?.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/) || []) : [];
-  const alvoNum = alvoMatch[1] != null ? parseInt(alvoMatch[1]) : null;
+  // Tenta [N] primeiro, depois qualquer número válido no string
+  const alvoNum = (() => {
+    if (!result?.apostar_em) return null;
+    const bracketMatch = result.apostar_em.match(/\[(\d+)\]/);
+    if (bracketMatch) return parseInt(bracketMatch[1]);
+    // Fallback: primeiro número 0-36 encontrado no apostar_em
+    const anyMatch = result.apostar_em.match(/\b(\d{1,2})\b/g) || [];
+    const valid = anyMatch.map(Number).filter(n => n >= 0 && n <= 36);
+    return valid.length > 0 ? valid[0] : null;
+  })();
   const nspAlvoNums = alvoNum != null ? [alvoNum] : [];
   const nspAlvoNum = alvoNum;
 
@@ -1201,10 +1208,9 @@ ${contextNote}` });
                   );
                   const lastNum = numbers[numbers.length - 1];
                   const bgLast = lastNum === 0 ? "#1b5e20" : RED_NUMBERS.has(lastNum) ? "#b71c1c" : "#1a1a1a";
-                  // Número alvo da dupla (extraído do apostar_em)
-                  const alvoMatch = result.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/) || []) : [];
-                  const alvoNum = alvoMatch[1] != null ? parseInt(alvoMatch[1]) : null;
-                  const bgAlvo = alvoNum == null ? "#1a1a1a" : alvoNum === 0 ? "#1b5e20" : RED_NUMBERS.has(alvoNum) ? "#b71c1c" : "#1a1a1a";
+                  // Número alvo da dupla — usa o alvoNum já calculado globalmente
+                  const localAlvo = alvoNum;
+                  const bgAlvo = localAlvo == null ? "#1a1a1a" : localAlvo === 0 ? "#1b5e20" : RED_NUMBERS.has(localAlvo) ? "#b71c1c" : "#1a1a1a";
                   const nspForca = result?.estrategias?.numeros_puxam?.forca;
                   return (
                     <div style={{ background: "#0d1118", border: "1px solid #c9a84c60", borderRadius: 16, padding: 16, marginBottom: 14 }}>
@@ -1223,7 +1229,7 @@ ${contextNote}` });
                         </div>
                         <div style={{ fontSize: 18, color: "#4a5568" }}>→</div>
                         {/* Número alvo */}
-                        {alvoNum != null && (
+                        {localAlvo != null && (
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                             <div style={{ fontSize: 8, color: "#00e676", fontFamily: "monospace", letterSpacing: 1 }}>APOSTAR</div>
                             <div style={{
@@ -1233,7 +1239,7 @@ ${contextNote}` });
                               display: "flex", alignItems: "center", justifyContent: "center",
                               fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "monospace",
                               boxShadow: "0 0 20px rgba(0,230,118,0.45)"
-                            }}>{alvoNum}</div>
+                            }}>{localAlvo}</div>
                           </div>
                         )}
                         <div style={{ flex: 1 }}>
@@ -1343,8 +1349,14 @@ ${contextNote}` });
                   );
 
                   // Número alvo da dupla (centro da aposta) — extraído do apostar_em
-                  const cm = result.apostar_em.match(/\[(\d+)\]/g) || [];
-                  const alvoNumbers = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  // Tenta [N] primeiro, depois qualquer número isolado no string
+                  const cmBracket = result.apostar_em.match(/\[(\d+)\]/g) || [];
+                  let alvoNumbers = cmBracket.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  if (alvoNumbers.length === 0) {
+                    // Fallback: pega todos os números no apostar_em
+                    const cmAny = result.apostar_em.match(/\b(\d{1,2})\b/g) || [];
+                    alvoNumbers = [...new Set(cmAny.map(Number).filter(n => n >= 0 && n <= 36))];
+                  }
 
                   if (alvoNumbers.length === 0) return (
                     <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>

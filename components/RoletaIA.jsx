@@ -950,11 +950,12 @@ ${contextNote}` });
     }
   }
 
-  // NSP alvo do último número — usado em JOGADA INDICADA, NÚMEROS DA JOGADA e RouletteTable
-  // Todos os números alvo do último gatilho (NSP) — array com um número por entrada alvo
-  // numero_gatilho vem direto da IA (nova sistemática — sem NSP)
-  const nspAlvoNums = (result?.numero_gatilho != null) ? [result.numero_gatilho] : [];
-  const nspAlvoNum = nspAlvoNums[0] ?? null;
+  // Alvo da dupla — extraído do apostar_em (ex: "X-Y-[28]-Z-W" → 28)
+  // Este é o número central que a IA indicou para apostar
+  const alvoMatch = result?.apostar_em ? (result.apostar_em.match(/\[(\d+)\]/) || []) : [];
+  const alvoNum = alvoMatch[1] != null ? parseInt(alvoMatch[1]) : null;
+  const nspAlvoNums = alvoNum != null ? [alvoNum] : [];
+  const nspAlvoNum = alvoNum;
 
   const statusColor = result ? (result.status_mesa === "BOA" ? "#00e676" : result.status_mesa === "EVITAR" ? "#ff3d57" : "#ffd740") : null;
   const statusBg = result ? (result.status_mesa === "BOA" ? "rgba(0,230,118,0.1)" : result.status_mesa === "EVITAR" ? "rgba(255,61,87,0.1)" : "rgba(255,215,64,0.1)") : null;
@@ -1341,82 +1342,56 @@ ${contextNote}` });
                     </div>
                   );
 
-                  // Números da DUPLA (apostar_em)
+                  // Número alvo da dupla (centro da aposta) — extraído do apostar_em
                   const cm = result.apostar_em.match(/\[(\d+)\]/g) || [];
-                  const duplaNumbers = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
+                  const alvoNumbers = cm.map(m => parseInt(m.replace(/[\[\]]/g, "")));
 
-                  // Números do NSP (nspAlvoNums separado)
-                  const nspNumbers = nspAlvoNums.filter(n => !duplaNumbers.includes(n));
-
-                  const renderRow = (centerNum, borderColor, labelColor, label) => {
-                    const bet = getWheelBet(centerNum, 3);
-                    return (
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={{ display: "flex", gap: 5, justifyContent: "center", alignItems: "center" }}>
-                          {bet.all.map((num, i) => {
-                            const isC = num === centerNum;
-                            const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
-                            return (
-                              <div key={i} style={{
-                                width: isC ? 46 : 34, height: isC ? 46 : 34,
-                                borderRadius: "50%", background: bg,
-                                border: `2px solid ${isC ? borderColor : "#f0d060"}`,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: isC ? 15 : 11, fontWeight: 900, color: "#fff",
-                                fontFamily: "monospace", flexShrink: 0,
-                                boxShadow: isC ? `0 0 14px ${borderColor}88` : "none",
-                              }}>{num}</div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  };
+                  if (alvoNumbers.length === 0) return (
+                    <div style={{ background: "#0d1118", border: "1px solid #1a2030", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#4a5568", letterSpacing: 3, fontFamily: "monospace", marginBottom: 10 }}>🎲 NÚMEROS DA JOGADA</div>
+                      {aguardarFrase}
+                    </div>
+                  );
 
                   return (
-                    <div style={{ background: "#0d1118", border: "1px solid #1e90ff30", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 10, color: "#1e90ff", letterSpacing: 3, fontFamily: "monospace", marginBottom: 14 }}>
+                    <div style={{ background: "#0d1118", border: "1px solid #00e67630", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: "#00e676", letterSpacing: 3, fontFamily: "monospace", marginBottom: 6 }}>
                         🎲 NÚMEROS DA JOGADA
                       </div>
+                      <div style={{ fontSize: 10, color: "#4a5568", fontFamily: "monospace", marginBottom: 14, textAlign: "center" }}>
+                        Alvo da Dupla {result.dupla_ativa} ± 3 vizinhos na roda
+                      </div>
 
-                      {/* Seção DUPLA */}
-                      {duplaNumbers.length > 0 && (
-                        <div style={{ marginBottom: 14 }}>
-                          <div style={{ fontSize: 9, color: "#1e90ff", fontFamily: "monospace", letterSpacing: 2, marginBottom: 8, textAlign: "center" }}>
-                            📐 DUPLA {result.dupla_ativa} — APOSTA PRINCIPAL
+                      {alvoNumbers.map((centerNum, idx) => {
+                        const bet = getWheelBet(centerNum, 3);
+                        return (
+                          <div key={idx} style={{ marginBottom: 10 }}>
+                            <div style={{ display: "flex", gap: 5, justifyContent: "center", alignItems: "center" }}>
+                              {bet.all.map((num, i) => {
+                                const isC = num === centerNum;
+                                const bg = num === 0 ? "#1b5e20" : RED_NUMBERS.has(num) ? "#b71c1c" : "#1a1a1a";
+                                return (
+                                  <div key={i} style={{
+                                    width: isC ? 52 : 36, height: isC ? 52 : 36,
+                                    borderRadius: "50%", background: bg,
+                                    border: `2px solid ${isC ? "#00e676" : "#f0d06066"}`,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: isC ? 17 : 12, fontWeight: 900, color: "#fff",
+                                    fontFamily: "monospace", flexShrink: 0,
+                                    boxShadow: isC ? "0 0 18px rgba(0,230,118,0.6)" : "none",
+                                  }}>{num}</div>
+                                );
+                              })}
+                            </div>
                           </div>
-                          {duplaNumbers.map((n, i) => (
-                            <div key={i}>{renderRow(n, "#1e90ff", "#1e90ff", "dupla")}</div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Divisor */}
-                      {duplaNumbers.length > 0 && nspNumbers.length > 0 && (
-                        <div style={{ borderTop: "1px solid #1a2030", marginBottom: 14 }} />
-                      )}
-
-                      {/* Seção NSP */}
-                      {nspNumbers.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: 9, color: "#c9a84c", fontFamily: "monospace", letterSpacing: 2, marginBottom: 8, textAlign: "center" }}>
-                            🔗 NSP — ALVOS CONFIRMADOS
-                          </div>
-                          {nspNumbers.map((n, i) => (
-                            <div key={i}>{renderRow(n, "#c9a84c", "#c9a84c", "nsp")}</div>
-                          ))}
-                        </div>
-                      )}
+                        );
+                      })}
 
                       {/* Legenda */}
                       <div style={{ display: "flex", gap: 14, marginTop: 8, justifyContent: "center", flexWrap: "wrap" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#1e90ff" }} />
-                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>DUPLA</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#c9a84c" }} />
-                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>NSP</span>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00e676" }} />
+                          <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "monospace" }}>ALVO</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f0d060" }} />
@@ -1435,7 +1410,7 @@ ${contextNote}` });
                 )}
 
                 {/* 6. MESA VISUAL — somente quando BOA */}
-                {result.status_mesa === "BOA" && <RouletteTable result={result} nspAlvoNum={nspAlvoNum} nspAlvoNums={nspAlvoNums} />}
+                {result.status_mesa === "BOA" && <RouletteTable result={result} nspAlvoNum={alvoNum} nspAlvoNums={nspAlvoNums} />}
 
 
               </div>

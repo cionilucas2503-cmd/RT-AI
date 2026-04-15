@@ -821,11 +821,10 @@ export default function RoletaIA() {
     const customBlock = customStrategies.filter(s => activeStrategies.has(s.id)).map(s =>
       `\n### ESTRATÉGIA PERSONALIZADA: ${s.title}\n${s.description}`
     ).join("\n");
-    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}\nFAÇA A ANÁLISE COMPLETA seguindo a ordem obrigatória:
-1º AVALIE AS 4 DUPLAS com base nos números fornecidos
-2º SOMENTE SE uma dupla estiver FORTE, consulte o NSP para validar o alvo
-3º O NSP é apenas validador — NUNCA use o NSP como razão principal para indicar BOA
-4º Retorne JSON com os resultados concretos — nunca instruções genéricas.`;
+    const contextNote = `\n\nESTRATÉGIAS ATIVAS: ${activeNames}.${customBlock ? "\n\nESTRATÉGIAS PERSONALIZADAS:" + customBlock : ""}
+IMPORTANTE: Analise TODOS os 10 números do histórico para identificar padrões e convergências entre estratégias.
+O número na posição 1 é o mais recente. Use o histórico completo para calcular frequências, terminais, setores, dúzias, paridade e cluster físico.
+Retorne JSON puro com os resultados — nunca instruções genéricas.`;
 
     const userContent = [];
 
@@ -845,13 +844,24 @@ REGRAS:
 Faça a análise completa com esses 10 números.${contextNote}` });
     } else {
       const nums10 = nums.slice(-10);
-      userContent.push({ type: "text", text: `ANÁLISE COMPLETA — faça do zero com estes 10 números.
+      const maisRecente = nums10[nums10.length - 1];
+      const historicoOrdenado = [...nums10].reverse();
+      userContent.push({ type: "text", text: `ANÁLISE COMPLETA — analise o padrão dos últimos 10 números.
 
-10 números para análise (do MAIS RECENTE para o MAIS ANTIGO):
-${[...nums10].reverse().join(", ")}
+Histórico (posição 1 = mais recente, posição 10 = mais antigo):
+${historicoOrdenado.map((n, i) => `${i+1}. ${n}`).join(" | ")}
 
-Mais recente: ${nums10[nums10.length-1]} | Mais antigo: ${nums10[0]}
+Último número inserido (mais recente): ${maisRecente}
 
+Use TODOS os 10 números acima para calcular:
+- Qual terminal aparece mais vezes (contar terminais de todos os 10)
+- Qual setor aparece mais vezes (classificar cada número nos setores)
+- Qual dúzia aparece mais vezes (contar dúzias de todos os 10)
+- Quais números se repetem (contar frequência individual)
+- Paridade/cor dominante (contar par/ímpar e vermelho/preto)
+- Cluster físico (verificar posições na roda dos últimos 7)
+
+NÃO analise somente o último número. A análise é sobre o padrão dos 10 números.
 ${contextNote}` });
     }
 
